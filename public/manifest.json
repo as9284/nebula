@@ -1,0 +1,21 @@
+{
+  "name": "Nebula · Luna",
+  "short_name": "Nebula",
+  "description": "Local-first AI chat powered by Luna",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#171714",
+  "theme_color": "#171714",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["productivity", "utilities"],
+  "lang": "en"
+}

@@ -1,36 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Nebula
 
-## Getting Started
+Local-first AI chat powered by **Luna**. Modern ChatGPT-style UX with portfolio-minimal visuals.
 
-First, run the development server:
+## Features
+
+- **Luna chat** — streaming markdown, threads, stop/regenerate/edit/copy
+- **Orbit** — tasks, notes, projects via natural language (inline cards)
+- **Solaris** — weather via Open-Meteo
+- **Hyperlane** — URL shortening
+- **Web search** — Tavily (optional toggle)
+- **Local data** — conversations in IndexedDB; settings in localStorage
+- **Export/import** — full backup JSON + memories-only
+- **PWA** — installable, offline-ready shell
+
+## Requirements
+
+- Node.js 20+
+- [DeepSeek API key](https://platform.deepseek.com) — model `deepseek-v4-flash`
+- [Tavily API key](https://tavily.com) — optional, for web search
+
+Keys are entered in **Settings** and stored in your browser only. They are sent to Next.js API routes which proxy requests — never committed to the repo.
+
+## Getting started
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000), add API keys in Settings, and start chatting.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Deploy to Vercel
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fas9284%2Fnebula)
 
-## Learn More
+Or manually:
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm run build
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Push to GitHub and import into [Vercel](https://vercel.com). No environment variables are required — API keys are handled client-side and proxied through BFF routes.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Scripts
 
-## Deploy on Vercel
+| Command | Description |
+|---------|-------------|
+| `npm run dev` | Development server |
+| `npm run build` | Production build |
+| `npm run start` | Start production server |
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Architecture
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Next.js 16** App Router + Tailwind v4
+- **Zustand** persist — IndexedDB (Luna, Orbit), localStorage (settings, Solaris, Hyperlane)
+- **BFF routes** — `/api/chat/stream`, `/api/search`, `/api/ai/text`, `/api/shorten`
+- **Constellation handlers** — Luna tool commands (fenced blocks) from [project-starfield](https://github.com/as9284/project-starfield), adapted for unified web chat
+
+## License
+
+MIT
