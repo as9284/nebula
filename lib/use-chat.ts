@@ -48,6 +48,7 @@ export function useChat() {
       };
       useLunaStore.getState().addMessage(convId, assistantMsg);
       useLunaStore.getState().setStreaming(true);
+      useLunaStore.getState().setStreamPhase("thinking");
 
       const slash = text.startsWith("/") ? slashToParsedCommands(text) : null;
 
@@ -66,17 +67,20 @@ export function useChat() {
               );
           }
           useLunaStore.getState().setStreaming(false);
+          useLunaStore.getState().setStreamPhase("idle");
           return;
         }
 
         let userContent = text;
         if (webSearchEnabled && tavilyKey) {
+          useLunaStore.getState().setStreamPhase("searching");
           try {
             const results = await searchWeb(text, tavilyKey);
             userContent = `[Web search results]\n${results}\n\n[User question]\n${text}`;
           } catch {
             // continue without search
           }
+          useLunaStore.getState().setStreamPhase("thinking");
         }
 
         const conv = useLunaStore
@@ -94,15 +98,21 @@ export function useChat() {
           constellationHandlers,
           useLunaStore.getState().memories,
           lunaControls,
+          webSearchEnabled,
         );
 
         abortRef.current = new AbortController();
+        let hasReceivedToken = false;
         const full = await streamChat(
           history,
           systemPrompt,
           deepseekKey,
           abortRef.current.signal,
           (token) => {
+            if (!hasReceivedToken) {
+              hasReceivedToken = true;
+              useLunaStore.getState().setStreamPhase("streaming");
+            }
             const current = useLunaStore
               .getState()
               .conversations.find((c) => c.id === convId)
@@ -141,6 +151,7 @@ export function useChat() {
         }
       } finally {
         useLunaStore.getState().setStreaming(false);
+        useLunaStore.getState().setStreamPhase("idle");
         abortRef.current = null;
       }
     },
@@ -150,6 +161,7 @@ export function useChat() {
   const stop = useCallback(() => {
     abortRef.current?.abort();
     useLunaStore.getState().setStreaming(false);
+    useLunaStore.getState().setStreamPhase("idle");
   }, []);
 
   const regenerate = useCallback(async () => {

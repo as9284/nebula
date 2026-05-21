@@ -43,6 +43,7 @@ export function buildLunaSystemPrompt(
   handlers: readonly ConstellationHandler[],
   memories: Memory[],
   controls: LunaControls,
+  webSearch: boolean,
 ): string {
   const handlerSections = handlers
     .map(
@@ -56,10 +57,14 @@ export function buildLunaSystemPrompt(
       ? `\n## User memories\n${memories.map((m) => `- ${m.text}`).join("\n")}`
       : "";
 
+  const webSearchBlock = webSearch
+    ? `\n## Web search\nYou have real-time web search access via Tavily. When a user's query requires current information, search results are automatically fetched and prepended to their message inside a [Web search results] block before it reaches you. Reference these results naturally, cite sources by number (e.g., "according to [1]"), and synthesize rather than regurgitate. If no search results appear, answer from your training data without mentioning the absence of search.`
+    : "";
+
   return `${LUNA_IDENTITY}
 
 ## Behavior
-${buildControlDirective(controls)}
+${buildControlDirective(controls)}${webSearchBlock}
 
 ## Available tools (use command blocks at end of reply)
 ${handlerSections}

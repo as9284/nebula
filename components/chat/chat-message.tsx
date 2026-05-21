@@ -5,6 +5,7 @@ import remarkGfm from "remark-gfm";
 import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
 import { ActionResults } from "@/components/cards/action-result";
+import { ThinkingIndicator } from "./thinking-indicator";
 import { useLunaStore } from "@/stores/use-luna-store";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
@@ -25,9 +26,12 @@ export function ChatMessage({
   onEditUser,
 }: ChatMessageProps) {
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
+  const streamPhase = useLunaStore((s) => s.streamPhase);
   const isUser = message.role === "user";
   const showCursor =
     !isUser && isStreaming && isLastAssistant && message.content.length > 0;
+  const showThinking =
+    !isUser && isStreaming && isLastAssistant && !message.content;
 
   return (
     <motion.div
@@ -70,8 +74,16 @@ export function ChatMessage({
                 <ReactMarkdown remarkPlugins={[remarkGfm]}>
                   {message.content}
                 </ReactMarkdown>
-              ) : isStreaming ? (
-                <span className="text-text-muted text-sm">Thinking…</span>
+              ) : showThinking ? (
+                <ThinkingIndicator
+                  phase={
+                    streamPhase === "searching"
+                      ? "searching"
+                      : streamPhase === "streaming"
+                        ? "streaming"
+                        : "thinking"
+                  }
+                />
               ) : null}
             </div>
           )}

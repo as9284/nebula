@@ -6,15 +6,19 @@ import type { Conversation, Memory, ChatMessage } from "@/types/chat";
 import { generateId } from "@/lib/utils";
 import { createIdbStorage } from "@/lib/storage";
 
+type StreamPhase = "idle" | "searching" | "thinking" | "streaming";
+
 interface LunaState {
   conversations: Conversation[];
   activeConversationId: string | null;
   memories: Memory[];
   actionResults: Record<string, import("@/lib/constellation-registry").ActionResult[]>;
   isStreaming: boolean;
+  streamPhase: StreamPhase;
   draftMessage: string;
   setDraftMessage: (text: string) => void;
   setStreaming: (v: boolean) => void;
+  setStreamPhase: (phase: StreamPhase) => void;
   createConversation: () => string;
   setActiveConversation: (id: string | null) => void;
   renameConversation: (id: string, title: string) => void;
@@ -45,9 +49,11 @@ export const useLunaStore = create<LunaState>()(
       memories: [],
       actionResults: {},
       isStreaming: false,
+      streamPhase: "idle",
       draftMessage: "",
       setDraftMessage: (draftMessage) => set({ draftMessage }),
       setStreaming: (isStreaming) => set({ isStreaming }),
+      setStreamPhase: (streamPhase) => set({ streamPhase }),
       createConversation: () => {
         const id = generateId();
         const conv: Conversation = {

@@ -20,6 +20,7 @@ export function MessageList({
     s.conversations.find((c) => c.id === s.activeConversationId),
   );
   const isStreaming = useLunaStore((s) => s.isStreaming);
+  const streamPhase = useLunaStore((s) => s.streamPhase);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
 
@@ -31,7 +32,7 @@ export function MessageList({
   useEffect(() => {
     if (!stickToBottom || !scrollRef.current) return;
     scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-  }, [messages, isStreaming, stickToBottom]);
+  }, [messages, isStreaming, streamPhase, stickToBottom]);
 
   const onScroll = () => {
     const el = scrollRef.current;
