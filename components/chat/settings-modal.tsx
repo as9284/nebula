@@ -146,7 +146,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
                 <Section icon={KeyRound} title="API Keys">
                   <p className="text-xs text-text-muted">
-                    Model: deepseek-v4-flash · Search: Tavily only
+                    Model: deepseek-v4-pro · Search: Tavily only
                   </p>
 
                   {deepseekKey && (

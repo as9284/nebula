@@ -2,6 +2,7 @@
 
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
 import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
 import { ActionResults } from "@/components/cards/action-result";
@@ -71,7 +72,7 @@ export function ChatMessage({
               )}
             >
               {message.content ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
                   {message.content}
                 </ReactMarkdown>
               ) : showThinking ? (
