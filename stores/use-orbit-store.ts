@@ -5,6 +5,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { Task, Note, Project } from "@/types/orbit";
 import { generateId } from "@/lib/utils";
 import { createIdbStorage } from "@/lib/storage";
+import { triggerCloudSync } from "@/lib/sync-trigger";
 
 interface OrbitState {
   tasks: Task[];
@@ -43,14 +44,19 @@ export const useOrbitStore = create<OrbitState>()(
           createdAt: Date.now(),
         };
         set((s) => ({ tasks: [task, ...s.tasks] }));
+        triggerCloudSync();
         return task;
       },
-      updateTask: (id, patch) =>
+      updateTask: (id, patch) => {
         set((s) => ({
           tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)),
-        })),
-      deleteTask: (id) =>
-        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+        }));
+        triggerCloudSync();
+      },
+      deleteTask: (id) => {
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) }));
+        triggerCloudSync();
+      },
       completeTask: (id) => get().updateTask(id, { completed: true }),
       addNote: (partial) => {
         const note: Note = {
@@ -61,14 +67,19 @@ export const useOrbitStore = create<OrbitState>()(
           createdAt: Date.now(),
         };
         set((s) => ({ notes: [note, ...s.notes] }));
+        triggerCloudSync();
         return note;
       },
-      updateNote: (id, patch) =>
+      updateNote: (id, patch) => {
         set((s) => ({
           notes: s.notes.map((n) => (n.id === id ? { ...n, ...patch } : n)),
-        })),
-      deleteNote: (id) =>
-        set((s) => ({ notes: s.notes.filter((n) => n.id !== id) })),
+        }));
+        triggerCloudSync();
+      },
+      deleteNote: (id) => {
+        set((s) => ({ notes: s.notes.filter((n) => n.id !== id) }));
+        triggerCloudSync();
+      },
       addProject: (partial) => {
         const project: Project = {
           id: generateId(),
@@ -81,13 +92,16 @@ export const useOrbitStore = create<OrbitState>()(
           createdAt: Date.now(),
         };
         set((s) => ({ projects: [project, ...s.projects] }));
+        triggerCloudSync();
         return project;
       },
-      updateProject: (id, patch) =>
+      updateProject: (id, patch) => {
         set((s) => ({
           projects: s.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)),
-        })),
-      deleteProject: (id) =>
+        }));
+        triggerCloudSync();
+      },
+      deleteProject: (id) => {
         set((s) => ({
           projects: s.projects.filter((p) => p.id !== id),
           tasks: s.tasks.map((t) =>
@@ -96,13 +110,17 @@ export const useOrbitStore = create<OrbitState>()(
           notes: s.notes.map((n) =>
             n.projectId === id ? { ...n, projectId: undefined } : n,
           ),
-        })),
-      hydrate: (data) =>
+        }));
+        triggerCloudSync();
+      },
+      hydrate: (data) => {
         set({
           tasks: data.tasks,
           notes: data.notes,
           projects: data.projects,
-        }),
+        });
+        triggerCloudSync();
+      },
     }),
     {
       name: "nebula-orbit",

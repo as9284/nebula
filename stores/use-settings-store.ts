@@ -4,6 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { LunaControls } from "@/lib/luna-prompt";
 import type { SearchProvider } from "@/types/search";
+import { triggerCloudSync } from "@/lib/sync-trigger";
 
 export type ThemeMode = "dark" | "light";
 
@@ -41,12 +42,20 @@ export const useSettingsStore = create<SettingsState>()(
       lunaControls: defaultControls,
       setDeepseekKey: (deepseekKey) => set({ deepseekKey }),
       setTavilyKey: (tavilyKey) => set({ tavilyKey }),
-      setSearchProvider: (searchProvider) => set({ searchProvider }),
-      setTheme: (theme) => set({ theme }),
-      setLunaControls: (partial) =>
+      setSearchProvider: (searchProvider) => {
+        set({ searchProvider });
+        triggerCloudSync();
+      },
+      setTheme: (theme) => {
+        set({ theme });
+        triggerCloudSync();
+      },
+      setLunaControls: (partial) => {
         set((s) => ({
           lunaControls: { ...s.lunaControls, ...partial },
-        })),
+        }));
+        triggerCloudSync();
+      },
     }),
     {
       name: "nebula-settings",

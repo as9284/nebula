@@ -32,6 +32,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { AccountSection } from "@/components/auth/account-section";
+import { flushCloudSync } from "@/lib/cloud-sync";
 
 interface SettingsModalProps {
   open: boolean;
@@ -122,6 +124,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const handleImport = async (file: File) => {
     try {
       const { summary } = await importNebulaBackup(file);
+      await flushCloudSync();
       setStatus(summary);
     } catch (e) {
       setStatus(`Import failed: ${(e as Error).message}`);
@@ -161,8 +164,15 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                   <Dialog.Title className="text-lg sm:text-xl font-semibold tracking-tight text-text-primary">
                     Settings
                   </Dialog.Title>
-                  <Dialog.Close className="flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
-                    <X size={18} />
+                  <Dialog.Description className="sr-only">
+                    API keys, appearance, Luna preferences, account sync, and data backup.
+                  </Dialog.Description>
+                  <Dialog.Close
+                    type="button"
+                    aria-label="Close settings"
+                    className="flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                  >
+                    <X size={18} aria-hidden />
                   </Dialog.Close>
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 sm:pt-5">
@@ -213,7 +223,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <label className="block text-sm text-text-secondary mb-2">
                       Theme
                     </label>
-                    <div className="flex gap-1 p-1 rounded-xl bg-bg border border-border">
+                    <div
+                      role="radiogroup"
+                      aria-label="Theme"
+                      className="flex gap-1 p-1 rounded-xl bg-bg border border-border"
+                    >
                       {(
                         [
                           { value: "dark", label: "Dark", icon: Moon },
@@ -223,6 +237,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         <button
                           key={value}
                           type="button"
+                          role="radio"
+                          aria-checked={theme === value}
                           onClick={() => setTheme(value as ThemeMode)}
                           className={cn(
                             "flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
@@ -231,7 +247,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               : "text-text-muted hover:text-text-secondary",
                           )}
                         >
-                          <Icon size={16} />
+                          <Icon size={16} aria-hidden />
                           {label}
                         </button>
                       ))}
@@ -246,7 +262,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <label className="block text-sm text-text-secondary mb-2">
                       Web search provider
                     </label>
-                    <div className="flex gap-1 p-1 rounded-xl bg-bg border border-border">
+                    <div
+                      role="radiogroup"
+                      aria-label="Web search provider"
+                      className="flex gap-1 p-1 rounded-xl bg-bg border border-border"
+                    >
                       {(
                         [
                           { value: "builtin", label: "Built-in" },
@@ -256,6 +276,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         <button
                           key={value}
                           type="button"
+                          role="radio"
+                          aria-checked={searchProvider === value}
                           onClick={() =>
                             setSearchProvider(value as SearchProvider)
                           }
@@ -287,6 +309,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       Response style
                     </label>
                     <Select
+                      ariaLabel="Response style"
                       value={lunaControls.responseStyle}
                       options={RESPONSE_OPTIONS}
                       onChange={(v) =>
@@ -305,6 +328,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     <div className="flex items-center gap-2 mb-2">
                       <input
                         type="text"
+                        aria-label="Add a memory"
                         placeholder="Add a memory…"
                         value={newMemory}
                         onChange={(e) => setNewMemory(e.target.value)}
@@ -319,6 +343,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       <button
                         type="button"
                         disabled={!newMemory.trim()}
+                        aria-label="Add memory"
                         onClick={() => {
                           if (newMemory.trim()) {
                             addMemories([newMemory.trim()]);
@@ -327,7 +352,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                         }}
                         className="shrink-0 p-2 rounded-xl bg-surface-elevated text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors disabled:opacity-40"
                       >
-                        <Plus size={16} />
+                        <Plus size={16} aria-hidden />
                       </button>
                     </div>
 
@@ -341,10 +366,11 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                             <span className="truncate">{m.text}</span>
                             <button
                               type="button"
+                              aria-label={`Remove memory: ${m.text}`}
                               onClick={() => removeMemory(m.id)}
                               className="shrink-0 p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger-subtle transition-colors"
                             >
-                              <Trash2 size={12} />
+                              <Trash2 size={12} aria-hidden />
                             </button>
                           </li>
                         ))}
@@ -359,11 +385,16 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
                 <div className="h-px bg-border mb-8" />
 
+                <AccountSection />
+
+                <div className="h-px bg-border mb-8" />
+
                 <Section icon={Database} title="Data">
                   <SettingRow label="Include API keys in backup">
                     <Checkbox
                       checked={includeKeys}
                       onChange={setIncludeKeys}
+                      ariaLabel="Include API keys in backup"
                     />
                   </SettingRow>
 
@@ -411,7 +442,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     const f = e.target.files?.[0];
                     if (f) {
                       void importMemoriesOnly(f)
-                        .then(() => setStatus("Memories imported."))
+                        .then(async () => {
+                          await flushCloudSync();
+                          setStatus("Memories imported.");
+                        })
                         .catch((err) => setStatus(String(err)));
                     }
                     e.target.value = "";

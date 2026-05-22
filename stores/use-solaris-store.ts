@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { GeocodingResult } from "@/lib/weather-types";
+import { triggerCloudSync } from "@/lib/sync-trigger";
 
 interface SolarisState {
   selectedLocation: GeocodingResult | null;
@@ -20,19 +21,26 @@ export const useSolarisStore = create<SolarisState>()(
     (set) => ({
       selectedLocation: null,
       recentLocations: [],
-      setSelectedLocation: (selectedLocation) => set({ selectedLocation }),
-      addRecentLocation: (loc) =>
+      setSelectedLocation: (selectedLocation) => {
+        set({ selectedLocation });
+        triggerCloudSync();
+      },
+      addRecentLocation: (loc) => {
         set((s) => ({
           recentLocations: [
             loc,
             ...s.recentLocations.filter((r) => r.name !== loc.name),
           ].slice(0, 8),
-        })),
-      hydrate: (data) =>
+        }));
+        triggerCloudSync();
+      },
+      hydrate: (data) => {
         set({
           selectedLocation: data.selectedLocation,
           recentLocations: data.recentLocations,
-        }),
+        });
+        triggerCloudSync();
+      },
     }),
     { name: "nebula-solaris", storage: createJSONStorage(() => localStorage) },
   ),

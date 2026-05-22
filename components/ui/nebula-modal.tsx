@@ -39,7 +39,10 @@ export function NebulaModal({
                 onClick={() => onOpenChange(false)}
               />
             </Dialog.Overlay>
-            <Dialog.Content asChild>
+            <Dialog.Content
+              asChild
+              {...(description ? {} : { "aria-describedby": undefined })}
+            >
               <motion.div
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -71,7 +74,7 @@ export function NebulaModal({
                     className="shrink-0 flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
                     aria-label="Close"
                   >
-                    <X size={18} />
+                    <X size={18} aria-hidden />
                   </Dialog.Close>
                 </div>
 

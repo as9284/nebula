@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -16,11 +16,21 @@ interface SelectProps {
   onChange: (value: string) => void;
   disabled?: boolean;
   placeholder?: string;
+  /** Accessible name for the trigger (use when no visible label is linked) */
+  ariaLabel?: string;
 }
 
-export function Select({ value, options, onChange, disabled, placeholder }: SelectProps) {
+export function Select({
+  value,
+  options,
+  onChange,
+  disabled,
+  placeholder,
+  ariaLabel,
+}: SelectProps) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const listboxId = useId();
   const selected = options.find((o) => o.value === value);
 
   const handleSelect = useCallback(
@@ -47,6 +57,15 @@ export function Select({ value, options, onChange, disabled, placeholder }: Sele
         type="button"
         disabled={disabled}
         onClick={() => setOpen(!open)}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-controls={listboxId}
+        aria-label={
+          ariaLabel ??
+          (selected
+            ? `${selected.label}, change selection`
+            : placeholder ?? "Select an option")
+        }
         className={cn(
           "w-full flex items-center justify-between gap-2 px-3.5 py-2.5 rounded-xl bg-bg border text-sm transition-all duration-200",
           open
@@ -61,6 +80,7 @@ export function Select({ value, options, onChange, disabled, placeholder }: Sele
         <motion.div
           animate={{ rotate: open ? 180 : 0 }}
           transition={{ duration: 0.2 }}
+          aria-hidden
         >
           <ChevronDown size={16} className="text-text-muted shrink-0" />
         </motion.div>
@@ -69,6 +89,9 @@ export function Select({ value, options, onChange, disabled, placeholder }: Sele
       <AnimatePresence>
         {open && (
           <motion.div
+            id={listboxId}
+            role="listbox"
+            aria-label={ariaLabel ?? "Options"}
             initial={{ opacity: 0, y: -6, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.96 }}
@@ -79,6 +102,8 @@ export function Select({ value, options, onChange, disabled, placeholder }: Sele
               <button
                 key={option.value}
                 type="button"
+                role="option"
+                aria-selected={value === option.value}
                 onClick={() => handleSelect(option.value)}
                 className={cn(
                   "w-full flex items-center justify-between gap-2 px-3.5 py-2 text-sm transition-colors",
@@ -89,7 +114,7 @@ export function Select({ value, options, onChange, disabled, placeholder }: Sele
               >
                 <span>{option.label}</span>
                 {value === option.value && (
-                  <Check size={14} className="text-text-primary shrink-0" />
+                  <Check size={14} className="text-text-primary shrink-0" aria-hidden />
                 )}
               </button>
             ))}

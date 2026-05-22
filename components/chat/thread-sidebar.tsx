@@ -177,6 +177,7 @@ export function ThreadSidebar({
                           {renamingId === c.id ? (
                             <input
                               autoFocus
+                              aria-label="Rename chat"
                               value={renameValue}
                               onChange={(e) => setRenameValue(e.target.value)}
                               onBlur={commitRename}
@@ -222,30 +223,35 @@ export function ThreadSidebar({
                               }
                               className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
                               aria-label="Chat options"
+                              aria-haspopup="menu"
                               aria-expanded={menuId === c.id}
                             >
-                              <MoreHorizontal size={16} />
+                              <MoreHorizontal size={16} aria-hidden />
                             </button>
                           )}
                           {menuId === c.id && (
                             <div
                               ref={menuRef}
+                              role="menu"
+                              aria-label="Chat options"
                               className="absolute right-2 top-full z-10 mt-1 py-1 rounded-xl border border-border bg-surface-elevated nebula-shadow-dropdown min-w-[9.5rem]"
                             >
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => startRename(c.id, c.title)}
                                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
                               >
-                                <Pencil size={14} />
+                                <Pencil size={14} aria-hidden />
                                 Rename
                               </button>
                               <button
                                 type="button"
+                                role="menuitem"
                                 onClick={() => requestDelete(c.id, c.title)}
                                 className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-danger hover:bg-danger-subtle transition-colors"
                               >
-                                <Trash2 size={14} />
+                                <Trash2 size={14} aria-hidden />
                                 Delete
                               </button>
                             </div>

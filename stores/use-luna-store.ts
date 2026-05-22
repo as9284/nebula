@@ -6,6 +6,8 @@ import type { Conversation, Memory, ChatMessage } from "@/types/chat";
 import { generateId } from "@/lib/utils";
 import { createIdbStorage } from "@/lib/storage";
 import { abortConversationStream } from "@/lib/chat-stream-registry";
+import { flushCloudSync } from "@/lib/cloud-sync";
+import { triggerCloudSync } from "@/lib/sync-trigger";
 
 export type StreamPhase = "idle" | "searching" | "thinking" | "streaming";
 
@@ -89,14 +91,16 @@ export const useLunaStore = create<LunaState>()(
             },
           };
         }),
-      endConversationStream: (conversationId) =>
+      endConversationStream: (conversationId) => {
         set((s) => ({
           streamingByConversationId: Object.fromEntries(
             Object.entries(s.streamingByConversationId).filter(
               ([id]) => id !== conversationId,
             ),
           ),
-        })),
+        }));
+        void flushCloudSync();
+      },
       createConversation: () => {
         const id = generateId();
         const conv: Conversation = {
@@ -110,16 +114,19 @@ export const useLunaStore = create<LunaState>()(
           conversations: [conv, ...s.conversations],
           activeConversationId: id,
         }));
+        triggerCloudSync();
         return id;
       },
       setActiveConversation: (activeConversationId) =>
         set({ activeConversationId }),
-      renameConversation: (id, title) =>
+      renameConversation: (id, title) => {
         set((s) => ({
           conversations: s.conversations.map((c) =>
             c.id === id ? { ...c, title, updatedAt: Date.now() } : c,
           ),
-        })),
+        }));
+        triggerCloudSync();
+      },
       deleteConversation: (id) => {
         abortConversationStream(id);
         set((s) => {
@@ -139,8 +146,9 @@ export const useLunaStore = create<LunaState>()(
             streamingByConversationId,
           };
         });
+        triggerCloudSync();
       },
-      addMessage: (conversationId, message) =>
+      addMessage: (conversationId, message) => {
         set((s) => ({
           conversations: s.conversations.map((c) => {
             if (c.id !== conversationId) return c;
@@ -158,7 +166,9 @@ export const useLunaStore = create<LunaState>()(
               updatedAt: Date.now(),
             };
           }),
-        })),
+        }));
+        triggerCloudSync();
+      },
       updateMessageContent: (conversationId, messageId, content) =>
         set((s) => ({
           conversations: s.conversations.map((c) =>
@@ -173,7 +183,7 @@ export const useLunaStore = create<LunaState>()(
               : c,
           ),
         })),
-      truncateFromMessage: (conversationId, messageId) =>
+      truncateFromMessage: (conversationId, messageId) => {
         set((s) => ({
           conversations: s.conversations.map((c) => {
             if (c.id !== conversationId) return c;
@@ -185,12 +195,16 @@ export const useLunaStore = create<LunaState>()(
               updatedAt: Date.now(),
             };
           }),
-        })),
-      setActionResults: (messageId, results) =>
+        }));
+        triggerCloudSync();
+      },
+      setActionResults: (messageId, results) => {
         set((s) => ({
           actionResults: { ...s.actionResults, [messageId]: results },
-        })),
-      setMessageSources: (conversationId, messageId, sources) =>
+        }));
+        triggerCloudSync();
+      },
+      setMessageSources: (conversationId, messageId, sources) => {
         set((s) => ({
           conversations: s.conversations.map((c) =>
             c.id === conversationId
@@ -203,8 +217,10 @@ export const useLunaStore = create<LunaState>()(
                 }
               : c,
           ),
-        })),
-      addMemories: (texts) =>
+        }));
+        triggerCloudSync();
+      },
+      addMemories: (texts) => {
         set((s) => {
           const existing = new Set(s.memories.map((m) => m.text));
           const newMemories = texts
@@ -215,13 +231,23 @@ export const useLunaStore = create<LunaState>()(
               createdAt: Date.now(),
             }));
           return { memories: [...s.memories, ...newMemories] };
-        }),
-      removeMemory: (id) =>
+        });
+        triggerCloudSync();
+      },
+      removeMemory: (id) => {
         set((s) => ({
           memories: s.memories.filter((m) => m.id !== id),
-        })),
-      setMemories: (memories) => set({ memories }),
-      setConversations: (conversations) => set({ conversations }),
+        }));
+        triggerCloudSync();
+      },
+      setMemories: (memories) => {
+        set({ memories });
+        triggerCloudSync();
+      },
+      setConversations: (conversations) => {
+        set({ conversations });
+        triggerCloudSync();
+      },
       getActiveConversation: () => {
         const { conversations, activeConversationId } = get();
         return conversations.find((c) => c.id === activeConversationId);

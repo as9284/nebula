@@ -50,6 +50,7 @@ export function Dock({
           <motion.button
             key={item.key}
             type="button"
+            aria-label={item.label}
             onClick={() => handleClick(item.key)}
             disabled={disabled}
             whileHover={disabled ? undefined : { scale: 1.05 }}
@@ -61,7 +62,7 @@ export function Dock({
                 : "hover:bg-surface-hover hover:text-text-primary",
             )}
           >
-            <item.icon size={18} strokeWidth={1.5} />
+            <item.icon size={18} strokeWidth={1.5} aria-hidden />
             <span className="text-sm font-medium hidden sm:inline">{item.label}</span>
           </motion.button>
         );

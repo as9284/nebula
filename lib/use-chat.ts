@@ -24,6 +24,7 @@ import {
   setStreamAbortController,
 } from "@/lib/chat-stream-registry";
 import { notifyConversationComplete } from "@/lib/notifications";
+import { flushCloudSync } from "@/lib/cloud-sync";
 
 function buildChatHistory(
   messages: ChatMessage[],
@@ -236,6 +237,7 @@ export function useChat() {
       } finally {
         useLunaStore.getState().endConversationStream(convId);
         clearStreamAbortController(convId);
+        void flushCloudSync();
         if (completedSuccessfully) {
           notifyConversationComplete(convId);
         }

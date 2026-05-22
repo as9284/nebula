@@ -43,19 +43,19 @@ export function ShortlinkCard({ result }: { result: ActionResult }) {
       <button
         type="button"
         onClick={copy}
+        aria-label="Copy short link"
         className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary"
-        title="Copy"
       >
-        {copied ? <Check size={14} /> : <Copy size={14} />}
+        {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
       </button>
       <a
         href={short}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Open short link"
         className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary"
-        title="Open"
       >
-        <ExternalLink size={14} />
+        <ExternalLink size={14} aria-hidden />
       </a>
     </div>
   );

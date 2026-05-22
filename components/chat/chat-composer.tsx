@@ -80,6 +80,7 @@ export function ChatComposer({
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
             onKeyDown={handleKeyDown}
+            aria-label="Message Luna"
             placeholder="Message Luna…"
             rows={1}
             disabled={isStreaming}
@@ -92,15 +93,15 @@ export function ChatComposer({
               type="button"
               onClick={() => canSend && onSend(draft)}
               disabled={!canSend}
+              aria-label="Send message"
               className={cn(
                 "shrink-0 p-2 rounded-xl mb-0.5 transition-colors",
                 canSend
                   ? "bg-accent text-accent-fg"
                   : "text-text-muted opacity-40",
               )}
-              title="Send"
             >
-              <Send size={18} />
+              <Send size={18} aria-hidden />
             </button>
           )}
         </div>

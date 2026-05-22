@@ -9,15 +9,24 @@ interface CheckboxProps {
   onChange: (checked: boolean) => void;
   disabled?: boolean;
   id?: string;
+  /** Accessible name when no visible label is associated */
+  ariaLabel?: string;
 }
 
-export function Checkbox({ checked, onChange, disabled, id }: CheckboxProps) {
+export function Checkbox({
+  checked,
+  onChange,
+  disabled,
+  id,
+  ariaLabel,
+}: CheckboxProps) {
   return (
     <button
       type="button"
       id={id}
       role="checkbox"
       aria-checked={checked}
+      aria-label={ariaLabel}
       disabled={disabled}
       onClick={() => onChange(!checked)}
       className={cn(
@@ -35,6 +44,7 @@ export function Checkbox({ checked, onChange, disabled, id }: CheckboxProps) {
           opacity: checked ? 1 : 0,
         }}
         transition={{ type: "spring", stiffness: 500, damping: 30 }}
+        aria-hidden
       >
         <Check size={12} strokeWidth={2.5} className="text-accent-fg" />
       </motion.div>

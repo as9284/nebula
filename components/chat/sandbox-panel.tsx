@@ -25,13 +25,14 @@ export function SandboxPanel() {
         </span>
         <button
           type="button"
+          aria-label="Close sandbox"
           onClick={() => {
             clearSandboxPayload();
             setPayload(null);
           }}
           className="p-1.5 text-text-muted hover:text-text-primary"
         >
-          <X size={18} />
+          <X size={18} aria-hidden />
         </button>
       </div>
       <pre className="flex-1 overflow-auto p-4 text-sm font-mono text-text-secondary whitespace-pre-wrap">

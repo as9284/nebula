@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { generateId } from "@/lib/utils";
+import { triggerCloudSync } from "@/lib/sync-trigger";
 
 export interface ShortLinkEntry {
   id: string;
@@ -35,11 +36,17 @@ export const useHyperlaneStore = create<HyperlaneState>()(
             ...s.history.filter((h) => h.originalUrl !== originalUrl),
           ].slice(0, 50),
         }));
+        triggerCloudSync();
         return entry;
       },
-      removeEntry: (id) =>
-        set((s) => ({ history: s.history.filter((h) => h.id !== id) })),
-      hydrate: (history) => set({ history }),
+      removeEntry: (id) => {
+        set((s) => ({ history: s.history.filter((h) => h.id !== id) }));
+        triggerCloudSync();
+      },
+      hydrate: (history) => {
+        set({ history });
+        triggerCloudSync();
+      },
     }),
     { name: "nebula-hyperlane", storage: createJSONStorage(() => localStorage) },
   ),

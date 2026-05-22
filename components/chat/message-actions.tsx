@@ -32,29 +32,29 @@ export function MessageActions({
       <button
         type="button"
         onClick={copy}
+        aria-label="Copy message"
         className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
-        title="Copy"
       >
-        <Copy size={14} />
+        <Copy size={14} aria-hidden />
       </button>
       {role === "assistant" && isLastAssistant && onRegenerate && (
         <button
           type="button"
           onClick={onRegenerate}
+          aria-label="Regenerate response"
           className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
-          title="Regenerate"
         >
-          <RotateCcw size={14} />
+          <RotateCcw size={14} aria-hidden />
         </button>
       )}
       {role === "user" && onEdit && (
         <button
           type="button"
           onClick={onEdit}
+          aria-label="Edit message"
           className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
-          title="Edit"
         >
-          <Pencil size={14} />
+          <Pencil size={14} aria-hidden />
         </button>
       )}
     </div>

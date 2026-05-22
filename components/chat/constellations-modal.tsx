@@ -161,14 +161,18 @@ export function ConstellationsModal({
                     <Dialog.Title className="text-lg sm:text-xl font-semibold tracking-tight text-text-primary">
                       Orbit
                     </Dialog.Title>
-                    <Dialog.Close className="flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
-                      <X size={18} />
+                    <Dialog.Close
+                      type="button"
+                      aria-label="Close Orbit"
+                      className="flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors"
+                    >
+                      <X size={18} aria-hidden />
                     </Dialog.Close>
                   </div>
-                  <p className="text-xs sm:text-sm text-text-muted">
+                  <Dialog.Description className="text-xs sm:text-sm text-text-muted">
                     Tasks, notes, projects, and links Luna created through
                     constellations.
-                  </p>
+                  </Dialog.Description>
 
                   <div className="relative mt-4 mb-0">
                     <Search
@@ -177,6 +181,7 @@ export function ConstellationsModal({
                     />
                     <input
                       type="search"
+                      aria-label="Search Orbit items"
                       placeholder="Search…"
                       value={query}
                       onChange={(e) => setQuery(e.target.value)}
@@ -184,11 +189,17 @@ export function ConstellationsModal({
                     />
                   </div>
 
-                  <div className="flex gap-1 p-1 mt-3 rounded-xl bg-bg border border-border overflow-x-auto">
+                  <div
+                    role="tablist"
+                    aria-label="Orbit sections"
+                    className="flex gap-1 p-1 mt-3 rounded-xl bg-bg border border-border overflow-x-auto"
+                  >
                     {TABS.map(({ key, label, icon: Icon }) => (
                       <button
                         key={key}
                         type="button"
+                        role="tab"
+                        aria-selected={tab === key}
                         onClick={() => {
                           setTab(key);
                           setEditingId(null);
@@ -200,7 +211,7 @@ export function ConstellationsModal({
                             : "text-text-muted hover:text-text-secondary",
                         )}
                       >
-                        <Icon size={14} />
+                        <Icon size={14} aria-hidden />
                         {label}
                         <span className="text-xs text-text-muted tabular-nums">
                           {counts[key]}
@@ -210,7 +221,11 @@ export function ConstellationsModal({
                   </div>
                 </div>
 
-                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:pb-6">
+                <div
+                  role="tabpanel"
+                  aria-label={TABS.find((t) => t.key === tab)?.label}
+                  className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-5 py-4 sm:px-6 sm:pb-6"
+                >
                   {tab === "tasks" && (
                     <TaskList
                       tasks={filteredTasks}
@@ -314,6 +329,11 @@ function TaskList({
             <Checkbox
               checked={task.completed}
               onChange={() => onToggleComplete(task)}
+              ariaLabel={
+                task.completed
+                  ? `Mark "${task.title}" incomplete`
+                  : `Mark "${task.title}" complete`
+              }
             />
             <div className="flex-1 min-w-0">
               <p
@@ -374,18 +394,21 @@ function TaskEditor({
       <textarea
         value={description}
         onChange={(e) => setDescription(e.target.value)}
+        aria-label="Task description"
         placeholder="Description (optional)"
         rows={2}
         className="w-full px-3.5 py-2.5 rounded-xl bg-surface border border-border text-sm text-text-primary placeholder:text-text-muted outline-none focus:border-text-muted resize-none"
       />
       <div className="flex gap-2 flex-wrap">
         <Select
+          ariaLabel="Task priority"
           value={priority}
           options={PRIORITY_OPTIONS}
           onChange={(v) => setPriority(v as TaskPriority)}
         />
         <input
           type="date"
+          aria-label="Due date"
           value={dueDate}
           onChange={(e) => setDueDate(e.target.value)}
           className="px-3 py-2 rounded-xl bg-surface border border-border text-sm text-text-primary outline-none"
@@ -674,25 +697,27 @@ function LinkRow({
       <button
         type="button"
         onClick={copy}
+        aria-label="Copy short link"
         className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
-        title="Copy"
       >
-        {copied ? <Check size={14} /> : <Copy size={14} />}
+        {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
       </button>
       <a
         href={link.shortUrl}
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="Open short link"
         className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
       >
-        <ExternalLink size={14} />
+        <ExternalLink size={14} aria-hidden />
       </a>
       <button
         type="button"
         onClick={onDelete}
+        aria-label="Remove link from history"
         className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-subtle opacity-0 group-hover:opacity-100 transition-opacity"
       >
-        <Trash2 size={14} />
+        <Trash2 size={14} aria-hidden />
       </button>
     </li>
   );
@@ -728,18 +753,18 @@ function ItemActions({
       <button
         type="button"
         onClick={onEdit}
+        aria-label="Edit"
         className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
-        title="Edit"
       >
-        <Pencil size={14} />
+        <Pencil size={14} aria-hidden />
       </button>
       <button
         type="button"
         onClick={onDelete}
+        aria-label="Delete"
         className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-subtle"
-        title="Delete"
       >
-        <Trash2 size={14} />
+        <Trash2 size={14} aria-hidden />
       </button>
     </div>
   );
