@@ -41,7 +41,7 @@ export function ConfirmDialog({
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 nebula-overlay backdrop-blur-sm z-50"
+                className="fixed inset-0 nebula-overlay backdrop-blur-sm z-[60]"
                 onClick={() => onOpenChange(false)}
               />
             </Dialog.Overlay>
@@ -52,7 +52,7 @@ export function ConfirmDialog({
                 exit={{ opacity: 0, scale: 0.96, y: 8 }}
                 transition={{ type: "spring", damping: 28, stiffness: 360 }}
                 className={cn(
-                  "nebula-modal-panel fixed z-50 w-[min(100%,20rem)]",
+                  "nebula-modal-panel fixed z-[60] w-[min(100%,20rem)]",
                   "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
                   "rounded-2xl p-5 sm:p-6",
                   "mx-4 sm:mx-0",

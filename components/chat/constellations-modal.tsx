@@ -23,6 +23,13 @@ import { cn } from "@/lib/utils";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { ConfirmDialog } from "@/components/ui/confirm-dialog";
+
+type DeleteTarget =
+  | { kind: "task"; id: string; label: string }
+  | { kind: "note"; id: string; label: string }
+  | { kind: "project"; id: string; label: string }
+  | { kind: "link"; id: string; label: string };
 
 interface ConstellationsModalProps {
   open: boolean;
@@ -63,6 +70,7 @@ export function ConstellationsModal({
   const [tab, setTab] = useState<Tab>("tasks");
   const [query, setQuery] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<DeleteTarget | null>(null);
 
   const tasks = useOrbitStore((s) => s.tasks);
   const notes = useOrbitStore((s) => s.notes);
@@ -123,9 +131,55 @@ export function ConstellationsModal({
     if (!next) {
       setEditingId(null);
       setQuery("");
+      setDeleteTarget(null);
     }
     onOpenChange(next);
   };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    switch (deleteTarget.kind) {
+      case "task":
+        deleteTask(deleteTarget.id);
+        break;
+      case "note":
+        deleteNote(deleteTarget.id);
+        break;
+      case "project":
+        deleteProject(deleteTarget.id);
+        break;
+      case "link":
+        removeLink(deleteTarget.id);
+        break;
+    }
+    setDeleteTarget(null);
+  };
+
+  const deleteDialogCopy = (() => {
+    if (!deleteTarget) return null;
+    switch (deleteTarget.kind) {
+      case "task":
+        return {
+          title: "Delete task?",
+          description: `"${deleteTarget.label}" will be removed permanently. This cannot be undone.`,
+        };
+      case "note":
+        return {
+          title: "Delete note?",
+          description: `"${deleteTarget.label}" will be removed permanently. This cannot be undone.`,
+        };
+      case "project":
+        return {
+          title: "Delete project?",
+          description: `"${deleteTarget.label}" will be removed permanently. This cannot be undone.`,
+        };
+      case "link":
+        return {
+          title: "Remove link?",
+          description: `"${deleteTarget.label}" will be removed from your link history.`,
+        };
+    }
+  })();
 
   return (
     <Dialog.Root open={open} onOpenChange={handleOpenChange}>
@@ -232,9 +286,9 @@ export function ConstellationsModal({
                       editingId={editingId}
                       onEdit={setEditingId}
                       onUpdate={updateTask}
-                      onDelete={(id) => {
-                        if (confirm("Delete this task?")) deleteTask(id);
-                      }}
+                      onDelete={(id, label) =>
+                        setDeleteTarget({ kind: "task", id, label })
+                      }
                       onToggleComplete={(t) =>
                         updateTask(t.id, { completed: !t.completed })
                       }
@@ -246,9 +300,9 @@ export function ConstellationsModal({
                       editingId={editingId}
                       onEdit={setEditingId}
                       onUpdate={updateNote}
-                      onDelete={(id) => {
-                        if (confirm("Delete this note?")) deleteNote(id);
-                      }}
+                      onDelete={(id, label) =>
+                        setDeleteTarget({ kind: "note", id, label })
+                      }
                     />
                   )}
                   {tab === "projects" && (
@@ -259,18 +313,17 @@ export function ConstellationsModal({
                       editingId={editingId}
                       onEdit={setEditingId}
                       onUpdate={updateProject}
-                      onDelete={(id) => {
-                        if (confirm("Delete this project?")) deleteProject(id);
-                      }}
+                      onDelete={(id, label) =>
+                        setDeleteTarget({ kind: "project", id, label })
+                      }
                     />
                   )}
                   {tab === "links" && (
                     <LinkList
                       links={filteredLinks}
-                      onDelete={(id) => {
-                        if (confirm("Remove this link from history?"))
-                          removeLink(id);
-                      }}
+                      onDelete={(id, label) =>
+                        setDeleteTarget({ kind: "link", id, label })
+                      }
                     />
                   )}
                 </div>
@@ -279,6 +332,16 @@ export function ConstellationsModal({
           </Dialog.Portal>
         )}
       </AnimatePresence>
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(next) => !next && setDeleteTarget(null)}
+        title={deleteDialogCopy?.title ?? ""}
+        description={deleteDialogCopy?.description ?? ""}
+        confirmLabel={deleteTarget?.kind === "link" ? "Remove" : "Delete"}
+        variant="danger"
+        onConfirm={confirmDelete}
+      />
     </Dialog.Root>
   );
 }
@@ -301,7 +364,7 @@ function TaskList({
   editingId: string | null;
   onEdit: (id: string | null) => void;
   onUpdate: (id: string, patch: Partial<Task>) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, label: string) => void;
   onToggleComplete: (task: Task) => void;
 }) {
   if (tasks.length === 0) {
@@ -361,7 +424,7 @@ function TaskList({
             </div>
             <ItemActions
               onEdit={() => onEdit(task.id)}
-              onDelete={() => onDelete(task.id)}
+              onDelete={() => onDelete(task.id, task.title)}
             />
           </li>
         ),
@@ -442,7 +505,7 @@ function NoteList({
   editingId: string | null;
   onEdit: (id: string | null) => void;
   onUpdate: (id: string, patch: Partial<Note>) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, label: string) => void;
 }) {
   if (notes.length === 0) {
     return <EmptyState message="No notes yet. Ask Luna to save one." />;
@@ -482,7 +545,7 @@ function NoteList({
               </div>
               <ItemActions
                 onEdit={() => onEdit(note.id)}
-                onDelete={() => onDelete(note.id)}
+                onDelete={() => onDelete(note.id, note.title)}
               />
             </div>
           </li>
@@ -539,7 +602,7 @@ function ProjectList({
   editingId: string | null;
   onEdit: (id: string | null) => void;
   onUpdate: (id: string, patch: Partial<Project>) => void;
-  onDelete: (id: string) => void;
+  onDelete: (id: string, label: string) => void;
 }) {
   if (projects.length === 0) {
     return <EmptyState message="No projects yet." />;
@@ -587,7 +650,7 @@ function ProjectList({
               </div>
               <ItemActions
                 onEdit={() => onEdit(project.id)}
-                onDelete={() => onDelete(project.id)}
+                onDelete={() => onDelete(project.id, project.name)}
               />
             </div>
           </li>
@@ -647,7 +710,7 @@ function LinkList({
   onDelete,
 }: {
   links: { id: string; shortUrl: string; originalUrl: string; createdAt: number }[];
-  onDelete: (id: string) => void;
+  onDelete: (id: string, label: string) => void;
 }) {
   if (links.length === 0) {
     return <EmptyState message="No shortened links yet." />;
@@ -656,7 +719,11 @@ function LinkList({
   return (
     <ul className="space-y-2">
       {links.map((link) => (
-        <LinkRow key={link.id} link={link} onDelete={() => onDelete(link.id)} />
+        <LinkRow
+          key={link.id}
+          link={link}
+          onDelete={() => onDelete(link.id, link.shortUrl)}
+        />
       ))}
     </ul>
   );

@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { User, Cloud, CloudOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/client";
@@ -23,7 +24,16 @@ function formatRelativeTime(iso: string | null): string {
   return new Date(iso).toLocaleDateString();
 }
 
+const AUTH_ERROR_MESSAGES: Record<string, string> = {
+  exchange:
+    "Sign-in link could not be completed. Open the link in the same browser where you requested it, or request a new link.",
+  verify: "Sign-in link is invalid or expired. Request a new magic link.",
+  missing: "Sign-in link is incomplete. Request a new magic link.",
+  config: "Cloud auth is not configured on this deployment.",
+};
+
 export function AccountSection() {
+  const searchParams = useSearchParams();
   const { user, loading, configured, signOut } = useAuth();
   const cloudSyncEnabled = useSyncStore((s) => s.cloudSyncEnabled);
   const setCloudSyncEnabled = useSyncStore((s) => s.setCloudSyncEnabled);
@@ -35,6 +45,19 @@ export function AccountSection() {
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
+
+  useEffect(() => {
+    if (searchParams.get("auth") !== "error") return;
+    const reason = searchParams.get("auth_reason") ?? "";
+    setStatus(
+      AUTH_ERROR_MESSAGES[reason] ??
+        "Sign-in failed. Request a new magic link and open it in the same browser.",
+    );
+    const url = new URL(window.location.href);
+    url.searchParams.delete("auth");
+    url.searchParams.delete("auth_reason");
+    window.history.replaceState({}, "", url.pathname + url.search + url.hash);
+  }, [searchParams]);
 
   const sendMagicLink = useCallback(async () => {
     const trimmed = email.trim();
@@ -172,7 +195,8 @@ export function AccountSection() {
             Send magic link
           </button>
           <p className="text-xs text-text-muted">
-            New users are created automatically on first sign-in.
+            New users are created automatically on first sign-in. Open the email
+            link in this same browser.
           </p>
         </div>
       )}
