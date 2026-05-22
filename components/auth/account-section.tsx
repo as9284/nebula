@@ -4,6 +4,7 @@ import { useCallback, useState } from "react";
 import { User, Cloud, CloudOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
 import { createClient } from "@/lib/supabase/client";
+import { getAuthCallbackUrl } from "@/lib/auth-redirect";
 import {
   applyRemoteAndResolveConflict,
   pushLocalAndResolveConflict,
@@ -41,7 +42,7 @@ export function AccountSection() {
     setStatus("");
     try {
       const supabase = createClient();
-      const redirectTo = `${window.location.origin}/auth/callback`;
+      const redirectTo = getAuthCallbackUrl();
       const { error } = await supabase.auth.signInWithOtp({
         email: trimmed,
         options: { emailRedirectTo: redirectTo },

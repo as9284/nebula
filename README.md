@@ -28,13 +28,16 @@ Copy `.env.example` to `.env.local` and set:
 
 - `NEXT_PUBLIC_SUPABASE_URL` — Project URL from Supabase dashboard
 - `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon/public key
+- `NEXT_PUBLIC_SITE_URL` — **production only** (Vercel env): your live app URL, e.g. `https://nebula.vercel.app` (no trailing slash). Magic links use this so emails never point at `localhost`.
 
 In **Settings → Account**, sign in with a **magic link** email. Data syncs automatically (debounced) when chats, memories, or Orbit data change. API keys are never uploaded.
 
-**Supabase Auth setup** (dashboard → Authentication → URL configuration):
+**Supabase Auth setup** (dashboard → Authentication → URL configuration) — **both** must match your real URLs:
 
-- Site URL: `http://localhost:3000` (and your production URL)
-- Redirect URLs: `http://localhost:3000/auth/callback`, `https://your-domain/auth/callback`
+1. **Site URL:** your production URL (e.g. `https://nebula.vercel.app`), **not** `http://localhost:3000` unless you only develop locally. If Site URL is localhost, production magic links in email will open localhost and fail.
+2. **Redirect URLs** (add every URL you use):
+   - `http://localhost:3000/auth/callback`
+   - `https://<your-production-domain>/auth/callback`
 
 Apply the schema from `supabase/migrations/001_user_snapshots.sql` (Supabase SQL editor or MCP `apply_migration`).
 
@@ -58,7 +61,11 @@ Or manually:
 npm run build
 ```
 
-Push to GitHub and import into [Vercel](https://vercel.com). API keys stay client-side. For cloud sync, add `NEXT_PUBLIC_SUPABASE_URL` and `NEXT_PUBLIC_SUPABASE_ANON_KEY` in Vercel environment variables.
+Push to GitHub and import into [Vercel](https://vercel.com). API keys stay client-side. For cloud sync, add in Vercel **Environment Variables** (Production):
+
+- `NEXT_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL` — same as your public app URL (required for magic links)
 
 ## Scripts
 
