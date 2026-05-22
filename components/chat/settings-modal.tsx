@@ -2,7 +2,19 @@
 
 import * as Dialog from "@radix-ui/react-dialog";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Trash2, Download, Upload, KeyRound, Sparkles, Database, Plus } from "lucide-react";
+import {
+  X,
+  Trash2,
+  Download,
+  Upload,
+  KeyRound,
+  Sparkles,
+  Database,
+  Plus,
+  Sun,
+  Moon,
+  Palette,
+} from "lucide-react";
 import { useState, useRef } from "react";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import type { SearchProvider } from "@/types/search";
@@ -15,6 +27,7 @@ import {
   importMemoriesOnly,
 } from "@/lib/backup";
 import type { LunaControls } from "@/lib/luna-prompt";
+import type { ThemeMode } from "@/stores/use-settings-store";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
@@ -81,6 +94,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const setDeepseekKey = useSettingsStore((s) => s.setDeepseekKey);
   const setTavilyKey = useSettingsStore((s) => s.setTavilyKey);
   const setSearchProvider = useSettingsStore((s) => s.setSearchProvider);
+  const theme = useSettingsStore((s) => s.theme);
+  const setTheme = useSettingsStore((s) => s.setTheme);
   const lunaControls = useSettingsStore((s) => s.lunaControls);
   const setLunaControls = useSettingsStore((s) => s.setLunaControls);
   const memories = useLunaStore((s) => s.memories);
@@ -124,26 +139,33 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
                 transition={{ duration: 0.2 }}
-                className="fixed inset-0 bg-black/50 backdrop-blur-md z-50"
+                className="fixed inset-0 nebula-overlay backdrop-blur-md z-50"
                 onClick={() => onOpenChange(false)}
               />
             </Dialog.Overlay>
             <Dialog.Content asChild>
               <motion.div
-                initial={{ opacity: 0, scale: 0.96, y: 16 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.96, y: 16 }}
-                transition={{ type: "spring", damping: 26, stiffness: 320 }}
-                className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-50 w-full max-w-md max-h-[85vh] overflow-y-auto rounded-2xl border border-border bg-surface p-6 shadow-[0_24px_64px_-16px_rgba(0,0,0,0.6)]"
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: 24 }}
+                transition={{ type: "spring", damping: 28, stiffness: 320 }}
+                className={cn(
+                  "nebula-modal-panel fixed z-50 flex flex-col w-full",
+                  "inset-x-0 bottom-0 max-h-[min(92dvh,100%)] rounded-t-2xl",
+                  "pb-[env(safe-area-inset-bottom,0px)]",
+                  "sm:inset-x-auto sm:bottom-auto sm:left-1/2 sm:top-1/2",
+                  "sm:-translate-x-1/2 sm:-translate-y-1/2 sm:max-h-[85vh] sm:max-w-md sm:rounded-2xl sm:pb-0",
+                )}
               >
-                <div className="flex items-center justify-between mb-8">
-                  <Dialog.Title className="text-xl font-semibold tracking-tight text-text-primary">
+                <div className="shrink-0 flex items-center justify-between gap-3 p-5 pb-4 sm:p-6 border-b border-border">
+                  <Dialog.Title className="text-lg sm:text-xl font-semibold tracking-tight text-text-primary">
                     Settings
                   </Dialog.Title>
-                  <Dialog.Close className="flex items-center justify-center w-8 h-8 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
+                  <Dialog.Close className="flex items-center justify-center w-9 h-9 rounded-xl text-text-muted hover:text-text-primary hover:bg-surface-hover transition-colors">
                     <X size={18} />
                   </Dialog.Close>
                 </div>
+                <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 sm:pt-5">
 
                 <Section icon={KeyRound} title="API Keys">
                   <p className="text-xs text-text-muted">
@@ -186,6 +208,39 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
                 <div className="h-px bg-border mb-8" />
 
+                <Section icon={Palette} title="Appearance">
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">
+                      Theme
+                    </label>
+                    <div className="flex gap-1 p-1 rounded-xl bg-bg border border-border">
+                      {(
+                        [
+                          { value: "dark", label: "Dark", icon: Moon },
+                          { value: "light", label: "Light", icon: Sun },
+                        ] as const
+                      ).map(({ value, label, icon: Icon }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() => setTheme(value as ThemeMode)}
+                          className={cn(
+                            "flex flex-1 items-center justify-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                            theme === value
+                              ? "bg-surface-elevated text-text-primary shadow-sm"
+                              : "text-text-muted hover:text-text-secondary",
+                          )}
+                        >
+                          <Icon size={16} />
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </Section>
+
+                <div className="h-px bg-border mb-8" />
+
                 <Section icon={Sparkles} title="Luna">
                   <div>
                     <label className="block text-sm text-text-secondary mb-2">
@@ -222,7 +277,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     </p>
                   </div>
                   {searchProvider === "tavily" && !tavilyKey && (
-                    <p className="text-xs text-amber-400/90">
+                    <p className="text-xs text-warning">
                       Add a Tavily API key or switch to Built-in search.
                     </p>
                   )}
@@ -287,7 +342,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                             <button
                               type="button"
                               onClick={() => removeMemory(m.id)}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-red-400 hover:bg-red-400/10 transition-colors"
+                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger-subtle transition-colors"
                             >
                               <Trash2 size={12} />
                             </button>
@@ -369,12 +424,13 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                       initial={{ opacity: 0, y: 6 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0 }}
-                      className="mt-4 text-xs text-text-secondary bg-bg rounded-xl px-4 py-3"
+                      className="mt-4 text-xs text-text-secondary bg-bg rounded-xl px-4 py-3 border border-border"
                     >
                       {status}
                     </motion.p>
                   )}
                 </AnimatePresence>
+                </div>
               </motion.div>
             </Dialog.Content>
           </Dialog.Portal>

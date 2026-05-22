@@ -1,11 +1,13 @@
 "use client";
 
 import { useRef, useEffect } from "react";
-import { Send, Square } from "lucide-react";
+import { Send } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLunaStore } from "@/stores/use-luna-store";
+import { isConversationStreaming } from "@/lib/luna-stream-selectors";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { cn } from "@/lib/utils";
+import { StopButton } from "./stop-button";
 
 interface ChatComposerProps {
   onSend: (text: string) => void;
@@ -20,7 +22,9 @@ export function ChatComposer({
 }: ChatComposerProps) {
   const draft = useLunaStore((s) => s.draftMessage);
   const setDraft = useLunaStore((s) => s.setDraftMessage);
-  const isStreaming = useLunaStore((s) => s.isStreaming);
+  const isStreaming = useLunaStore((s) =>
+    isConversationStreaming(s, s.activeConversationId),
+  );
   const deepseekKey = useSettingsStore((s) => s.deepseekKey);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -47,7 +51,7 @@ export function ChatComposer({
         animate={{ opacity: 1, y: 0 }}
         className="nebula-composer-offset nebula-chat-inset-x fixed left-0 right-0 z-30"
       >
-        <div className="max-w-xl mx-auto text-center text-sm text-text-secondary bg-surface-elevated/80 backdrop-blur-xl rounded-2xl px-4 py-4 border border-border sm:px-6">
+        <div className="nebula-panel max-w-xl mx-auto text-center text-sm text-text-secondary rounded-2xl px-4 py-4 nebula-shadow-elevated sm:px-6">
           Add your{" "}
           <button
             type="button"
@@ -70,7 +74,7 @@ export function ChatComposer({
       className="nebula-composer-offset nebula-chat-inset-x fixed left-0 right-0 z-30"
     >
       <div className="max-w-2xl mx-auto w-full min-w-0">
-        <div className="flex items-end gap-2 rounded-2xl border border-border bg-surface-elevated/90 backdrop-blur-xl px-3 py-3 shadow-[0_8px_32px_-8px_rgba(0,0,0,0.5)] sm:px-4">
+        <div className="nebula-panel flex items-end gap-2 rounded-2xl px-3 py-3 nebula-shadow-elevated sm:px-4">
           <textarea
             ref={textareaRef}
             value={draft}
@@ -82,14 +86,7 @@ export function ChatComposer({
             className="flex-1 resize-none bg-transparent text-[0.9375rem] text-text-primary placeholder:text-text-muted outline-none max-h-[200px] py-2"
           />
           {isStreaming ? (
-            <button
-              type="button"
-              onClick={onStop}
-              className="shrink-0 p-2 rounded-xl bg-accent text-accent-fg mb-0.5"
-              title="Stop"
-            >
-              <Square size={18} fill="currentColor" />
-            </button>
+            <StopButton onStop={onStop} />
           ) : (
             <button
               type="button"

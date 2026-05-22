@@ -1,9 +1,14 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { WelcomeState } from "./welcome-state";
 import { useLunaStore } from "@/stores/use-luna-store";
+import {
+  getActiveStreamAssistantMessageId,
+  getConversationStreamPhase,
+  isConversationStreaming,
+} from "@/lib/luna-stream-selectors";
 
 interface MessageListProps {
   onSuggest: (text: string) => void;
@@ -19,19 +24,28 @@ export function MessageList({
   const conversation = useLunaStore((s) =>
     s.conversations.find((c) => c.id === s.activeConversationId),
   );
-  const isStreaming = useLunaStore((s) => s.isStreaming);
-  const streamPhase = useLunaStore((s) => s.streamPhase);
+  const isStreaming = useLunaStore((s) =>
+    isConversationStreaming(s, s.activeConversationId),
+  );
+  const streamPhase = useLunaStore((s) =>
+    getConversationStreamPhase(s, s.activeConversationId),
+  );
+  const streamingAssistantId = useLunaStore(getActiveStreamAssistantMessageId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
 
-  const messages = conversation?.messages ?? [];
+  const messages = useMemo(
+    () => conversation?.messages ?? [],
+    [conversation?.messages],
+  );
   const lastAssistantId = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.id;
   const activeStreamPhase =
-    streamPhase === "searching" ||
-    streamPhase === "thinking" ||
-    streamPhase === "streaming"
+    isStreaming &&
+    (streamPhase === "searching" ||
+      streamPhase === "thinking" ||
+      streamPhase === "streaming")
       ? streamPhase
       : undefined;
 
@@ -60,7 +74,8 @@ export function MessageList({
       <div className="max-w-3xl mx-auto w-full">
         {messages.map((msg) => {
           const isActiveAssistant =
-            isStreaming && msg.id === lastAssistantId;
+            isStreaming &&
+            msg.id === (streamingAssistantId ?? lastAssistantId);
           return (
             <ChatMessage
               key={msg.id}

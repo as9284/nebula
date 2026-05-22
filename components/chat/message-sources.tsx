@@ -34,11 +34,11 @@ export function MessageSources({ sources }: MessageSourcesProps) {
               href={source.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="group snap-start shrink-0 w-[min(100%,14.5rem)] sm:w-[15.5rem] flex flex-col gap-2 p-3 rounded-xl border border-border/80 bg-surface/40 hover:bg-surface-hover/80 hover:border-[rgba(138,120,230,0.35)] transition-colors duration-150"
+              className="luna-source-card group snap-start shrink-0 w-[min(100%,14.5rem)] sm:w-[15.5rem] flex flex-col gap-2 p-3 rounded-xl border transition-colors duration-150"
             >
               <div className="flex items-center gap-2 min-w-0">
                 <span
-                  className="shrink-0 flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-[rgba(138,120,230,0.14)] px-1 text-[10px] font-semibold tabular-nums text-[var(--color-luna)]"
+                  className="luna-source-badge shrink-0 flex h-5 min-w-[1.25rem] items-center justify-center rounded-md px-1 text-[10px] font-semibold tabular-nums"
                   aria-hidden
                 >
                   {source.index}

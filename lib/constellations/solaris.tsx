@@ -2,11 +2,6 @@
 
 import { useSolarisStore } from "@/stores/use-solaris-store";
 import { weatherApi } from "@/lib/weather";
-import { WMO_CODES } from "@/lib/weather-types";
-import type {
-  WeatherForecastResponse,
-  GeocodingResult,
-} from "@/lib/weather-types";
 import type {
   ConstellationHandler,
   ParsedCommand,

@@ -5,20 +5,35 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import type { Conversation, Memory, ChatMessage } from "@/types/chat";
 import { generateId } from "@/lib/utils";
 import { createIdbStorage } from "@/lib/storage";
+import { abortConversationStream } from "@/lib/chat-stream-registry";
 
-type StreamPhase = "idle" | "searching" | "thinking" | "streaming";
+export type StreamPhase = "idle" | "searching" | "thinking" | "streaming";
+
+export type ActiveStreamPhase = Exclude<StreamPhase, "idle">;
+
+export interface ConversationStream {
+  phase: ActiveStreamPhase;
+  assistantMessageId: string;
+}
 
 interface LunaState {
   conversations: Conversation[];
   activeConversationId: string | null;
   memories: Memory[];
   actionResults: Record<string, import("@/lib/constellation-registry").ActionResult[]>;
-  isStreaming: boolean;
-  streamPhase: StreamPhase;
+  streamingByConversationId: Record<string, ConversationStream>;
   draftMessage: string;
   setDraftMessage: (text: string) => void;
-  setStreaming: (v: boolean) => void;
-  setStreamPhase: (phase: StreamPhase) => void;
+  startConversationStream: (
+    conversationId: string,
+    assistantMessageId: string,
+    phase?: ActiveStreamPhase,
+  ) => void;
+  setConversationStreamPhase: (
+    conversationId: string,
+    phase: ActiveStreamPhase,
+  ) => void;
+  endConversationStream: (conversationId: string) => void;
   createConversation: () => string;
   setActiveConversation: (id: string | null) => void;
   renameConversation: (id: string, title: string) => void;
@@ -53,12 +68,35 @@ export const useLunaStore = create<LunaState>()(
       activeConversationId: null,
       memories: [],
       actionResults: {},
-      isStreaming: false,
-      streamPhase: "idle",
+      streamingByConversationId: {},
       draftMessage: "",
       setDraftMessage: (draftMessage) => set({ draftMessage }),
-      setStreaming: (isStreaming) => set({ isStreaming }),
-      setStreamPhase: (streamPhase) => set({ streamPhase }),
+      startConversationStream: (conversationId, assistantMessageId, phase = "thinking") =>
+        set((s) => ({
+          streamingByConversationId: {
+            ...s.streamingByConversationId,
+            [conversationId]: { phase, assistantMessageId },
+          },
+        })),
+      setConversationStreamPhase: (conversationId, phase) =>
+        set((s) => {
+          const current = s.streamingByConversationId[conversationId];
+          if (!current) return s;
+          return {
+            streamingByConversationId: {
+              ...s.streamingByConversationId,
+              [conversationId]: { ...current, phase },
+            },
+          };
+        }),
+      endConversationStream: (conversationId) =>
+        set((s) => ({
+          streamingByConversationId: Object.fromEntries(
+            Object.entries(s.streamingByConversationId).filter(
+              ([id]) => id !== conversationId,
+            ),
+          ),
+        })),
       createConversation: () => {
         const id = generateId();
         const conv: Conversation = {
@@ -82,15 +120,26 @@ export const useLunaStore = create<LunaState>()(
             c.id === id ? { ...c, title, updatedAt: Date.now() } : c,
           ),
         })),
-      deleteConversation: (id) =>
+      deleteConversation: (id) => {
+        abortConversationStream(id);
         set((s) => {
+          const streamingByConversationId = Object.fromEntries(
+            Object.entries(s.streamingByConversationId).filter(
+              ([streamId]) => streamId !== id,
+            ),
+          );
           const conversations = s.conversations.filter((c) => c.id !== id);
           const activeConversationId =
             s.activeConversationId === id
               ? conversations[0]?.id ?? null
               : s.activeConversationId;
-          return { conversations, activeConversationId };
-        }),
+          return {
+            conversations,
+            activeConversationId,
+            streamingByConversationId,
+          };
+        });
+      },
       addMessage: (conversationId, message) =>
         set((s) => ({
           conversations: s.conversations.map((c) => {

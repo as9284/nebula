@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
-@theme inline {
+/* Semantic tokens — overridden on html.light; referenced by @theme for runtime theming */
+:root {
   --color-bg: #171714;
   --color-surface: #1f1f1c;
   --color-surface-hover: #2a2a26;
@@ -12,20 +13,189 @@
   --color-accent: #e8e6e3;
   --color-accent-fg: #171714;
   --color-luna: #8a78e6;
-  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
-}
-
-:root {
   --nebula-safe-top: env(safe-area-inset-top, 0px);
   --nebula-safe-bottom: env(safe-area-inset-bottom, 0px);
   --nebula-app-height: 100dvh;
+  --shadow-elevated: 0 8px 32px -8px rgba(0, 0, 0, 0.5);
+  --shadow-modal: 0 24px 64px -16px rgba(0, 0, 0, 0.6);
+  --shadow-dropdown: 0 16px 48px -12px rgba(0, 0, 0, 0.7);
+  --overlay-backdrop: rgba(0, 0, 0, 0.45);
+  --color-logo-bg: #1f1f1c;
+  --color-logo-ring: rgba(232, 230, 227, 0.08);
+  --color-code-inline: rgba(255, 255, 255, 0.06);
+  --color-code-block: #141412;
+  --color-link-underline: rgba(255, 255, 255, 0.25);
+  --color-link-underline-hover: rgba(255, 255, 255, 0.6);
+  --color-luna-bg: rgba(138, 120, 230, 0.14);
+  --color-luna-border: rgba(138, 120, 230, 0.28);
+  --color-luna-bg-hover: rgba(138, 120, 230, 0.22);
+  --color-luna-border-hover: rgba(138, 120, 230, 0.45);
+  --color-luna-source-border-hover: rgba(138, 120, 230, 0.35);
+  --color-callout-bg: rgba(255, 255, 255, 0.03);
+  --color-table-head: rgba(255, 255, 255, 0.04);
+  --color-table-row-hover: rgba(255, 255, 255, 0.02);
+  --color-strike: rgba(255, 255, 255, 0.25);
+  --color-danger: #f87171;
+  --color-danger-bg: rgba(248, 113, 113, 0.1);
+  --color-danger-border: rgba(248, 113, 113, 0.25);
+  --color-warning: #fbbf24;
+  --color-scrollbar: rgba(255, 255, 255, 0.1);
+  --color-scrollbar-hover: rgba(255, 255, 255, 0.18);
+}
+
+@theme inline {
+  --color-bg: var(--color-bg);
+  --color-surface: var(--color-surface);
+  --color-surface-hover: var(--color-surface-hover);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-border: var(--color-border);
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-accent: var(--color-accent);
+  --color-accent-fg: var(--color-accent-fg);
+  --color-luna: var(--color-luna);
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
 html {
   color-scheme: dark;
   height: 100%;
   overflow: hidden;
+}
+
+html.light {
+  color-scheme: light;
+  --color-bg: #f7f6f3;
+  --color-surface: #ffffff;
+  --color-surface-hover: #f0efec;
+  --color-surface-elevated: #ffffff;
+  --color-border: rgba(0, 0, 0, 0.08);
+  --color-text-primary: #1a1a18;
+  --color-text-secondary: #5c5c58;
+  --color-text-muted: #8a8a85;
+  --color-accent: #1a1a18;
+  --color-accent-fg: #f7f6f3;
+  --color-luna: #6b5cc6;
+  --shadow-elevated: 0 8px 32px -8px rgba(0, 0, 0, 0.08);
+  --shadow-modal: 0 24px 48px -12px rgba(0, 0, 0, 0.12);
+  --shadow-dropdown: 0 12px 40px -8px rgba(0, 0, 0, 0.12);
+  --overlay-backdrop: rgba(0, 0, 0, 0.35);
+  --color-logo-bg: #eeede9;
+  --color-logo-ring: rgba(0, 0, 0, 0.06);
+  --color-code-inline: rgba(0, 0, 0, 0.06);
+  --color-code-block: #eeede9;
+  --color-link-underline: rgba(0, 0, 0, 0.2);
+  --color-link-underline-hover: rgba(0, 0, 0, 0.45);
+  --color-luna-bg: rgba(107, 92, 198, 0.12);
+  --color-luna-border: rgba(107, 92, 198, 0.28);
+  --color-luna-bg-hover: rgba(107, 92, 198, 0.2);
+  --color-luna-border-hover: rgba(107, 92, 198, 0.42);
+  --color-luna-source-border-hover: rgba(107, 92, 198, 0.35);
+  --color-callout-bg: rgba(0, 0, 0, 0.03);
+  --color-table-head: rgba(0, 0, 0, 0.04);
+  --color-table-row-hover: rgba(0, 0, 0, 0.02);
+  --color-strike: rgba(0, 0, 0, 0.25);
+  --color-danger: #dc2626;
+  --color-danger-bg: rgba(220, 38, 38, 0.08);
+  --color-danger-border: rgba(220, 38, 38, 0.22);
+  --color-warning: #d97706;
+  --color-scrollbar: rgba(0, 0, 0, 0.12);
+  --color-scrollbar-hover: rgba(0, 0, 0, 0.2);
+}
+
+.nebula-shadow-elevated {
+  box-shadow: var(--shadow-elevated);
+}
+
+.nebula-shadow-modal {
+  box-shadow: var(--shadow-modal);
+}
+
+.nebula-shadow-dropdown {
+  box-shadow: var(--shadow-dropdown);
+}
+
+.nebula-overlay {
+  background: var(--overlay-backdrop);
+}
+
+.text-danger {
+  color: var(--color-danger);
+}
+
+.text-warning {
+  color: var(--color-warning);
+}
+
+.hover\:text-danger:hover {
+  color: var(--color-danger);
+}
+
+.hover\:bg-danger:hover {
+  background: var(--color-danger-bg);
+}
+
+.bg-danger-subtle,
+.hover\:bg-danger-subtle:hover {
+  background: var(--color-danger-bg);
+}
+
+.border-danger-subtle {
+  border-color: var(--color-danger-border);
+}
+
+.luna-source-card {
+  border-color: color-mix(in srgb, var(--color-border) 80%, transparent);
+  background: color-mix(in srgb, var(--color-surface) 40%, transparent);
+}
+
+.luna-source-card:hover {
+  background: color-mix(in srgb, var(--color-surface-hover) 80%, transparent);
+  border-color: var(--color-luna-source-border-hover);
+}
+
+.luna-source-badge {
+  background: var(--color-luna-bg);
+  color: var(--color-luna);
+}
+
+.nebula-suggestion-pill {
+  border: 1px solid var(--color-border);
+  background: color-mix(in srgb, var(--color-surface) 65%, transparent);
+  color: var(--color-text-primary);
+}
+
+html.light .nebula-suggestion-pill {
+  background: var(--color-surface);
+}
+
+.nebula-suggestion-pill:hover {
+  border-color: var(--color-border);
+  background: var(--color-surface-hover);
+  color: var(--color-text-primary);
+}
+
+.nebula-panel {
+  background: var(--color-surface-elevated);
+  border: 1px solid var(--color-border);
+}
+
+html.light .nebula-panel {
+  background: var(--color-surface);
+}
+
+.nebula-modal-panel {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-modal);
+}
+
+@media (min-width: 640px) {
+  .nebula-modal-panel {
+    animation: none;
+  }
 }
 
 body {
@@ -107,7 +277,7 @@ body {
 
 /* Inline code */
 .luna-prose code:not(pre code) {
-  background: rgba(255, 255, 255, 0.06);
+  background: var(--color-code-inline);
   padding: 0.15rem 0.4rem;
   border-radius: 5px;
   font-family: var(--font-mono);
@@ -117,7 +287,7 @@ body {
 
 /* Code blocks */
 .luna-prose pre {
-  background: #141412;
+  background: var(--color-code-block);
   border: 1px solid var(--color-border);
   border-radius: 10px;
   padding: 0.875rem 1rem;
@@ -140,12 +310,12 @@ body {
   color: var(--color-text-primary);
   text-decoration: underline;
   text-underline-offset: 3px;
-  text-decoration-color: rgba(255, 255, 255, 0.25);
+  text-decoration-color: var(--color-link-underline);
   transition: text-decoration-color 0.15s;
 }
 
 .luna-prose a:hover {
-  text-decoration-color: rgba(255, 255, 255, 0.6);
+  text-decoration-color: var(--color-link-underline-hover);
 }
 
 .luna-prose a.luna-citation-link {
@@ -161,16 +331,16 @@ body {
   font-variant-numeric: tabular-nums;
   text-decoration: none;
   color: var(--color-luna);
-  background: rgba(138, 120, 230, 0.14);
-  border: 1px solid rgba(138, 120, 230, 0.28);
+  background: var(--color-luna-bg);
+  border: 1px solid var(--color-luna-border);
   border-radius: 6px;
   vertical-align: 0.15em;
   transition: background 0.15s, border-color 0.15s;
 }
 
 .luna-prose a.luna-citation-link:hover {
-  background: rgba(138, 120, 230, 0.22);
-  border-color: rgba(138, 120, 230, 0.45);
+  background: var(--color-luna-bg-hover);
+  border-color: var(--color-luna-border-hover);
   text-decoration: none;
 }
 
@@ -188,7 +358,7 @@ body {
 }
 
 .luna-prose blockquote.luna-callout {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--color-callout-bg);
   border-left: 2px solid var(--color-luna);
   border-radius: 0 10px 10px 0;
   padding: 0.625rem 0.875rem;
@@ -263,7 +433,7 @@ body {
 }
 
 .luna-prose thead {
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--color-table-head);
 }
 
 .luna-prose th,
@@ -286,7 +456,7 @@ body {
 }
 
 .luna-prose tbody tr:hover {
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--color-table-row-hover);
 }
 
 /* Blockquotes */
@@ -318,7 +488,7 @@ body {
 .luna-prose s {
   color: var(--color-text-muted);
   text-decoration: line-through;
-  text-decoration-color: rgba(255, 255, 255, 0.25);
+  text-decoration-color: var(--color-strike);
 }
 
 /* Images */
@@ -353,8 +523,8 @@ body {
 }
 
 .tool-card-error {
-  border-color: rgba(248, 113, 113, 0.25);
-  color: rgba(248, 113, 113, 0.9);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger);
 }
 
 .tool-card-weather {
@@ -382,9 +552,13 @@ body {
   }
 }
 
+html.light .luna-prose li > input[type="checkbox"]:checked {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='%23f7f6f3'%3E%3Cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3E%3C/svg%3E");
+}
+
 * {
   scrollbar-width: 3px;
-  scrollbar-color: rgba(255, 255, 255, 0.1) transparent;
+  scrollbar-color: var(--color-scrollbar) transparent;
 }
 
 ::-webkit-scrollbar {
@@ -397,12 +571,12 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--color-scrollbar);
   border-radius: 999px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.18);
+  background: var(--color-scrollbar-hover);
 }
 
 ::-webkit-scrollbar-corner {

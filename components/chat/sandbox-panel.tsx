@@ -18,7 +18,7 @@ export function SandboxPanel() {
   const content = String(payload.content ?? "");
 
   return (
-    <div className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l border-border bg-surface z-30 flex flex-col shadow-xl">
+    <div className="fixed right-0 top-0 bottom-0 w-full max-w-md border-l border-border bg-surface z-30 flex flex-col nebula-shadow-modal">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border">
         <span className="text-sm font-medium text-text-primary capitalize">
           {type} sandbox

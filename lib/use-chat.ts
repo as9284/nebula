@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useCallback } from "react";
+import { useCallback } from "react";
 import { useLunaStore } from "@/stores/use-luna-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { buildLunaSystemPrompt } from "@/lib/luna-prompt";
@@ -18,6 +18,12 @@ import type { StreamMessage } from "@/lib/stream-client";
 import { buildSearchQuery } from "@/lib/search-query";
 import { formatActionResultsForHistory } from "@/lib/action-result-history";
 import type { ActionResult } from "@/lib/constellation-registry";
+import {
+  abortConversationStream,
+  clearStreamAbortController,
+  setStreamAbortController,
+} from "@/lib/chat-stream-registry";
+import { notifyConversationComplete } from "@/lib/notifications";
 
 function buildChatHistory(
   messages: ChatMessage[],
@@ -52,8 +58,6 @@ function buildChatHistory(
 }
 
 export function useChat() {
-  const abortRef = useRef<AbortController | null>(null);
-
   const sendMessage = useCallback(
     async (rawText: string) => {
       const text = rawText.trim();
@@ -86,11 +90,12 @@ export function useChat() {
         createdAt: Date.now(),
       };
       useLunaStore.getState().addMessage(convId, assistantMsg);
-      useLunaStore.getState().setStreaming(true);
-
-      useLunaStore.getState().setStreamPhase("thinking");
+      useLunaStore
+        .getState()
+        .startConversationStream(convId, assistantId, "thinking");
 
       const slash = text.startsWith("/") ? slashToParsedCommands(text) : null;
+      let completedSuccessfully = false;
 
       try {
         if (slash) {
@@ -106,8 +111,7 @@ export function useChat() {
                 "Done — see the result below.",
               );
           }
-          useLunaStore.getState().setStreaming(false);
-          useLunaStore.getState().setStreamPhase("idle");
+          useLunaStore.getState().endConversationStream(convId);
           return;
         }
 
@@ -129,7 +133,9 @@ export function useChat() {
             );
 
             if (decision.search) {
-              useLunaStore.getState().setStreamPhase("searching");
+              useLunaStore
+                .getState()
+                .setConversationStreamPhase(convId, "searching");
               const { query: searchQuery, topic } = buildSearchQuery(
                 decision.query,
               );
@@ -152,7 +158,9 @@ export function useChat() {
           } catch {
             // continue without search
           }
-          useLunaStore.getState().setStreamPhase("thinking");
+          useLunaStore
+            .getState()
+            .setConversationStreamPhase(convId, "thinking");
         }
 
         const state = useLunaStore.getState();
@@ -173,17 +181,20 @@ export function useChat() {
           searchAvailable,
         );
 
-        abortRef.current = new AbortController();
+        const abortController = new AbortController();
+        setStreamAbortController(convId, abortController);
         let hasReceivedToken = false;
         const full = await streamChat(
           history,
           systemPrompt,
           deepseekKey,
-          abortRef.current.signal,
+          abortController.signal,
           (token) => {
             if (!hasReceivedToken) {
               hasReceivedToken = true;
-              useLunaStore.getState().setStreamPhase("streaming");
+              useLunaStore
+                .getState()
+                .setConversationStreamPhase(convId, "streaming");
             }
             const current = useLunaStore
               .getState()
@@ -211,6 +222,7 @@ export function useChat() {
         if (newMemories.length) {
           useLunaStore.getState().addMemories(newMemories);
         }
+        completedSuccessfully = true;
       } catch (e) {
         if ((e as Error).name !== "AbortError") {
           useLunaStore
@@ -222,18 +234,21 @@ export function useChat() {
             );
         }
       } finally {
-        useLunaStore.getState().setStreaming(false);
-        useLunaStore.getState().setStreamPhase("idle");
-        abortRef.current = null;
+        useLunaStore.getState().endConversationStream(convId);
+        clearStreamAbortController(convId);
+        if (completedSuccessfully) {
+          notifyConversationComplete(convId);
+        }
       }
     },
     [],
   );
 
   const stop = useCallback(() => {
-    abortRef.current?.abort();
-    useLunaStore.getState().setStreaming(false);
-    useLunaStore.getState().setStreamPhase("idle");
+    const convId = useLunaStore.getState().activeConversationId;
+    if (!convId) return;
+    abortConversationStream(convId);
+    useLunaStore.getState().endConversationStream(convId);
   }, []);
 
   const regenerate = useCallback(async () => {

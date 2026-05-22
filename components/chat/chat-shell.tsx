@@ -5,21 +5,31 @@ import { ThreadSidebar } from "./thread-sidebar";
 import { MessageList } from "./message-list";
 import { ChatComposer } from "./chat-composer";
 import { SettingsModal } from "./settings-modal";
+import { ConstellationsModal } from "./constellations-modal";
 import { SandboxPanel } from "./sandbox-panel";
 import { Dock } from "./dock";
 import { useChat } from "@/lib/use-chat";
 import { useStoresHydrated } from "@/lib/use-stores-hydrated";
 import { useLunaStore } from "@/stores/use-luna-store";
+import { isActiveConversationEmpty } from "@/lib/conversation-utils";
 import { ChatShellSkeleton } from "./chat-shell-skeleton";
+import { NebulaToasts } from "@/components/ui/nebula-toasts";
 
 export function ChatShell() {
   const storesHydrated = useStoresHydrated();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
+  const [orbitOpen, setOrbitOpen] = useState(false);
   const { sendMessage, stop, regenerate } = useChat();
   const setDraft = useLunaStore((s) => s.setDraftMessage);
   const truncateFromMessage = useLunaStore((s) => s.truncateFromMessage);
   const createConversation = useLunaStore((s) => s.createConversation);
+  const activeConversationId = useLunaStore((s) => s.activeConversationId);
+  const conversations = useLunaStore((s) => s.conversations);
+  const newChatDisabled = isActiveConversationEmpty({
+    conversations,
+    activeConversationId,
+  });
 
   const handleSuggest = useCallback(
     (text: string) => {
@@ -41,6 +51,7 @@ export function ChatShell() {
   );
 
   const handleNewChat = useCallback(() => {
+    if (isActiveConversationEmpty(useLunaStore.getState())) return;
     createConversation();
     setSidebarOpen(false);
   }, [createConversation]);
@@ -76,12 +87,16 @@ export function ChatShell() {
 
       <Dock
         onNewChat={handleNewChat}
+        newChatDisabled={newChatDisabled}
         onToggleSidebar={() => setSidebarOpen((s) => !s)}
+        onOpenOrbit={() => setOrbitOpen(true)}
         onOpenSettings={() => setSettingsOpen(true)}
       />
 
       <SandboxPanel />
+      <ConstellationsModal open={orbitOpen} onOpenChange={setOrbitOpen} />
       <SettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <NebulaToasts />
     </div>
   );
 }

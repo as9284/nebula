@@ -14,6 +14,7 @@ export interface ShortLinkEntry {
 interface HyperlaneState {
   history: ShortLinkEntry[];
   addEntry: (originalUrl: string, shortUrl: string) => ShortLinkEntry;
+  removeEntry: (id: string) => void;
   hydrate: (history: ShortLinkEntry[]) => void;
 }
 
@@ -36,6 +37,8 @@ export const useHyperlaneStore = create<HyperlaneState>()(
         }));
         return entry;
       },
+      removeEntry: (id) =>
+        set((s) => ({ history: s.history.filter((h) => h.id !== id) })),
       hydrate: (history) => set({ history }),
     }),
     { name: "nebula-hyperlane", storage: createJSONStorage(() => localStorage) },

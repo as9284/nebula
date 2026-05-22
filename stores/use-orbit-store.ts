@@ -18,6 +18,8 @@ interface OrbitState {
   updateNote: (id: string, patch: Partial<Note>) => void;
   deleteNote: (id: string) => void;
   addProject: (project: Omit<Project, "id" | "createdAt" | "taskIds" | "noteIds">) => Project;
+  updateProject: (id: string, patch: Partial<Project>) => void;
+  deleteProject: (id: string) => void;
   hydrate: (data: { tasks: Task[]; notes: Note[]; projects: Project[] }) => void;
 }
 
@@ -81,6 +83,20 @@ export const useOrbitStore = create<OrbitState>()(
         set((s) => ({ projects: [project, ...s.projects] }));
         return project;
       },
+      updateProject: (id, patch) =>
+        set((s) => ({
+          projects: s.projects.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+        })),
+      deleteProject: (id) =>
+        set((s) => ({
+          projects: s.projects.filter((p) => p.id !== id),
+          tasks: s.tasks.map((t) =>
+            t.projectId === id ? { ...t, projectId: undefined } : t,
+          ),
+          notes: s.notes.map((n) =>
+            n.projectId === id ? { ...n, projectId: undefined } : n,
+          ),
+        })),
       hydrate: (data) =>
         set({
           tasks: data.tasks,

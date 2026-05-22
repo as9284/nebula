@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { ThemeProvider } from "@/components/theme-provider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -17,10 +18,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#171714" },
-    { media: "(prefers-color-scheme: light)", color: "#171714" },
-  ],
+  themeColor: "#171714",
 };
 
 export const metadata: Metadata = {
@@ -73,8 +71,18 @@ export default function RootLayout({
       lang="en"
       dir="ltr"
       className={`${geistSans.variable} ${geistMono.variable} h-full`}
+      suppressHydrationWarning
     >
-      <body className="nebula-app antialiased">{children}</body>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var r=localStorage.getItem("nebula-settings");if(!r)return;var p=JSON.parse(r);var t=(p.state||p).theme;if(t==="light"){document.documentElement.classList.add("light");document.documentElement.style.colorScheme="light";}}catch(e){}})();`,
+          }}
+        />
+      </head>
+      <body className="nebula-app antialiased">
+        <ThemeProvider>{children}</ThemeProvider>
+      </body>
     </html>
   );
 }
