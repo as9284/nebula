@@ -1,3 +1,5 @@
+import type { SearchTopic } from "@/lib/search-query";
+
 export interface StreamMessage {
   role: "user" | "assistant" | "system";
   content: string;
@@ -66,6 +68,7 @@ export async function streamChat(
 export async function searchWeb(
   query: string,
   tavilyKey: string,
+  topic: SearchTopic = "general",
 ): Promise<string> {
   const res = await fetch("/api/search", {
     method: "POST",
@@ -73,7 +76,7 @@ export async function searchWeb(
       "Content-Type": "application/json",
       "x-tavily-key": tavilyKey,
     },
-    body: JSON.stringify({ query }),
+    body: JSON.stringify({ query, topic }),
   });
   if (!res.ok) {
     const err = (await res.json()) as { error?: string };

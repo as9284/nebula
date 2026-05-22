@@ -30,7 +30,12 @@ export function ThinkingIndicator({ phase }: ThinkingIndicatorProps) {
   const Icon = config.icon;
 
   return (
-    <div className="flex items-center gap-2.5 select-none">
+    <div
+      role="status"
+      aria-live="polite"
+      aria-label={config.label}
+      className="flex items-center gap-2.5 select-none min-h-[1.75rem]"
+    >
       <div className="relative flex items-center justify-center w-6 h-6">
         <motion.div
           className="absolute inset-0 rounded-full bg-surface-hover"

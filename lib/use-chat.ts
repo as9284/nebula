@@ -12,6 +12,30 @@ import { slashToParsedCommands } from "@/lib/slash-commands";
 import { generateId } from "@/lib/utils";
 import type { ChatMessage } from "@/types/chat";
 import { getSandboxPayload } from "@/lib/constellations/sandbox";
+import type { StreamMessage } from "@/lib/stream-client";
+import { buildSearchQuery } from "@/lib/search-query";
+
+function buildChatHistory(
+  messages: ChatMessage[],
+  excludeMessageId: string,
+  latestUserContent: string,
+): StreamMessage[] {
+  const history = messages
+    .filter((m) => m.id !== excludeMessageId)
+    .map((m) => ({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    }));
+
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].role === "user") {
+      history[i] = { ...history[i], content: latestUserContent };
+      break;
+    }
+  }
+
+  return history;
+}
 
 export function useChat() {
   const abortRef = useRef<AbortController | null>(null);
@@ -48,7 +72,11 @@ export function useChat() {
       };
       useLunaStore.getState().addMessage(convId, assistantMsg);
       useLunaStore.getState().setStreaming(true);
-      useLunaStore.getState().setStreamPhase("thinking");
+
+      const willSearch = webSearchEnabled && !!tavilyKey;
+      useLunaStore
+        .getState()
+        .setStreamPhase(willSearch ? "searching" : "thinking");
 
       const slash = text.startsWith("/") ? slashToParsedCommands(text) : null;
 
@@ -72,10 +100,10 @@ export function useChat() {
         }
 
         let userContent = text;
-        if (webSearchEnabled && tavilyKey) {
-          useLunaStore.getState().setStreamPhase("searching");
+        if (willSearch) {
           try {
-            const results = await searchWeb(text, tavilyKey);
+            const { query: searchQuery, topic } = buildSearchQuery(text);
+            const results = await searchWeb(searchQuery, tavilyKey, topic);
             userContent = `[Web search results]\n${results}\n\n[User question]\n${text}`;
           } catch {
             // continue without search
@@ -86,13 +114,9 @@ export function useChat() {
         const conv = useLunaStore
           .getState()
           .conversations.find((c) => c.id === convId);
-        const history =
-          conv?.messages
-            .filter((m) => m.id !== assistantId)
-            .map((m) => ({
-              role: m.role as "user" | "assistant",
-              content: m.content,
-            })) ?? [];
+        const history = conv
+          ? buildChatHistory(conv.messages, assistantId, userContent)
+          : [];
 
         const systemPrompt = buildLunaSystemPrompt(
           constellationHandlers,

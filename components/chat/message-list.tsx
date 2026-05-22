@@ -28,6 +28,12 @@ export function MessageList({
   const lastAssistantId = [...messages]
     .reverse()
     .find((m) => m.role === "assistant")?.id;
+  const activeStreamPhase =
+    streamPhase === "searching" ||
+    streamPhase === "thinking" ||
+    streamPhase === "streaming"
+      ? streamPhase
+      : undefined;
 
   useEffect(() => {
     if (!stickToBottom || !scrollRef.current) return;
@@ -52,18 +58,25 @@ export function MessageList({
       className="nebula-chat-scroll flex-1 overflow-y-auto px-4 pb-40 pt-4"
     >
       <div className="max-w-3xl mx-auto w-full">
-        {messages.map((msg) => (
-          <ChatMessage
-            key={msg.id}
-            message={msg}
-            isStreaming={isStreaming && msg.id === lastAssistantId}
-            isLastAssistant={msg.id === lastAssistantId}
-            onRegenerate={
-              msg.id === lastAssistantId ? onRegenerate : undefined
-            }
-            onEditUser={onEditUser}
-          />
-        ))}
+        {messages.map((msg) => {
+          const isActiveAssistant =
+            isStreaming && msg.id === lastAssistantId;
+          return (
+            <ChatMessage
+              key={msg.id}
+              message={msg}
+              isStreaming={isActiveAssistant}
+              isLastAssistant={msg.id === lastAssistantId}
+              activeStreamPhase={
+                isActiveAssistant ? activeStreamPhase : undefined
+              }
+              onRegenerate={
+                msg.id === lastAssistantId ? onRegenerate : undefined
+              }
+              onEditUser={onEditUser}
+            />
+          );
+        })}
       </div>
     </div>
   );

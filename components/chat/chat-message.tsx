@@ -11,23 +11,33 @@ import { useLunaStore } from "@/stores/use-luna-store";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
+type ActiveStreamPhase = "searching" | "thinking" | "streaming";
+
 interface ChatMessageProps {
   message: ChatMessageType;
   isStreaming: boolean;
   isLastAssistant: boolean;
+  activeStreamPhase?: ActiveStreamPhase;
   onRegenerate?: () => void;
   onEditUser?: (content: string) => void;
+}
+
+function toIndicatorPhase(
+  phase: ActiveStreamPhase | undefined,
+): ActiveStreamPhase {
+  if (phase === "searching" || phase === "streaming") return phase;
+  return "thinking";
 }
 
 export function ChatMessage({
   message,
   isStreaming,
   isLastAssistant,
+  activeStreamPhase,
   onRegenerate,
   onEditUser,
 }: ChatMessageProps) {
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
-  const streamPhase = useLunaStore((s) => s.streamPhase);
   const isUser = message.role === "user";
   const showCursor =
     !isUser && isStreaming && isLastAssistant && message.content.length > 0;
@@ -77,13 +87,8 @@ export function ChatMessage({
                 </ReactMarkdown>
               ) : showThinking ? (
                 <ThinkingIndicator
-                  phase={
-                    streamPhase === "searching"
-                      ? "searching"
-                      : streamPhase === "streaming"
-                        ? "streaming"
-                        : "thinking"
-                  }
+                  key={activeStreamPhase ?? "thinking"}
+                  phase={toIndicatorPhase(activeStreamPhase)}
                 />
               ) : null}
             </div>
