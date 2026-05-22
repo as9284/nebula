@@ -1,3 +1,5 @@
+import type { SearchSource } from "@/types/search";
+
 export type MessageRole = "user" | "assistant";
 
 export interface ChatMessage {
@@ -5,6 +7,7 @@ export interface ChatMessage {
   role: MessageRole;
   content: string;
   createdAt: number;
+  sources?: SearchSource[];
 }
 
 export interface Conversation {

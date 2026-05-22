@@ -1,12 +1,11 @@
 "use client";
 
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
 import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
 import { ActionResults } from "@/components/cards/action-result";
 import { ThinkingIndicator } from "./thinking-indicator";
+import { LunaMarkdown } from "./luna-markdown";
+import { MessageSources } from "./message-sources";
 import { useLunaStore } from "@/stores/use-luna-store";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
@@ -38,6 +37,7 @@ export function ChatMessage({
   onEditUser,
 }: ChatMessageProps) {
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
+  const sources = message.sources;
   const isUser = message.role === "user";
   const showCursor =
     !isUser && isStreaming && isLastAssistant && message.content.length > 0;
@@ -46,68 +46,81 @@ export function ChatMessage({
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 8 }}
+      initial={{ opacity: 0, y: 6 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "group py-3 px-2 sm:px-4",
-        isUser ? "flex justify-end" : "",
+        "group px-2 sm:px-4",
+        isUser ? "flex justify-end py-1.5" : "py-2.5",
       )}
     >
       <div
         className={cn(
-          "max-w-3xl w-full",
-          isUser ? "flex flex-col items-end" : "",
+          isUser
+            ? "relative max-w-[min(85%,36rem)]"
+            : "max-w-3xl w-full min-w-0",
         )}
       >
         {!isUser && (
-          <span className="text-xs font-medium text-text-muted mb-1 tracking-wide">
+          <span className="text-xs font-medium text-text-muted mb-1.5 tracking-wide">
             Luna
           </span>
         )}
-        <div
-          className={cn(
-            "relative",
-            isUser &&
-              "bg-surface border border-border rounded-2xl px-4 py-3 max-w-[85%]",
-          )}
-        >
+
+        <div className="relative">
+          <div
+            className={cn(
+              isUser &&
+                "rounded-2xl border border-border bg-surface px-3.5 py-2 shadow-sm",
+            )}
+          >
+            {isUser ? (
+              <p className="text-[0.9375rem] leading-snug whitespace-pre-wrap text-text-primary">
+                {message.content}
+              </p>
+            ) : (
+              <div
+                className={cn("luna-prose", showCursor && "typing-cursor")}
+              >
+                {message.content ? (
+                  <LunaMarkdown content={message.content} sources={sources} />
+                ) : showThinking ? (
+                  <ThinkingIndicator
+                    key={activeStreamPhase ?? "thinking"}
+                    phase={toIndicatorPhase(activeStreamPhase)}
+                  />
+                ) : null}
+              </div>
+            )}
+          </div>
+
           {isUser ? (
-            <p className="text-[0.9375rem] whitespace-pre-wrap">{message.content}</p>
+            <MessageActions
+              role={message.role}
+              content={message.content}
+              isLastAssistant={isLastAssistant}
+              onRegenerate={onRegenerate}
+              onEdit={
+                onEditUser ? () => onEditUser(message.content) : undefined
+              }
+              className="absolute right-0 top-full mt-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto"
+            />
           ) : (
-            <div
-              className={cn(
-                "luna-prose",
-                showCursor && "typing-cursor",
-              )}
-            >
-              {message.content ? (
-                <ReactMarkdown remarkPlugins={[remarkGfm, remarkBreaks]}>
-                  {message.content}
-                </ReactMarkdown>
-              ) : showThinking ? (
-                <ThinkingIndicator
-                  key={activeStreamPhase ?? "thinking"}
-                  phase={toIndicatorPhase(activeStreamPhase)}
-                />
-              ) : null}
-            </div>
+            <MessageActions
+              role={message.role}
+              content={message.content}
+              isLastAssistant={isLastAssistant}
+              onRegenerate={onRegenerate}
+              className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+            />
           )}
-          <MessageActions
-            role={message.role}
-            content={message.content}
-            isLastAssistant={isLastAssistant}
-            onRegenerate={onRegenerate}
-            onEdit={
-              isUser && onEditUser
-                ? () => onEditUser(message.content)
-                : undefined
-            }
-            className={cn("mt-1", isUser ? "justify-end" : "")}
-          />
         </div>
+
+        {!isUser && sources && sources.length > 0 && !isStreaming && (
+          <MessageSources sources={sources} />
+        )}
         {actionResults && actionResults.length > 0 && (
-          <div className="mt-2 max-w-3xl">
+          <div className="mt-2">
             <ActionResults results={actionResults} />
           </div>
         )}

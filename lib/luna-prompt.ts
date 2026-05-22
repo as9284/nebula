@@ -58,7 +58,16 @@ export function buildLunaSystemPrompt(
       : "";
 
   const webSearchBlock = webSearch
-    ? `\n## Web search\nYou have real-time web search access via Tavily. When a user's query requires current information, search results are automatically fetched and prepended to their message inside a [Web search results] block before it reaches you. Reference these results naturally, cite sources by number (e.g., "according to [1]"), and synthesize rather than regurgitate. If no search results appear, answer from your training data without mentioning the absence of search.`
+    ? `\n## Web search
+You have real-time web search via Tavily. When results are provided, they appear in a [Web search results] block (numbered [1], [2], …) before the user's question.
+
+**Formatting (required when using search results):**
+- Use rich markdown: ### section headings, **bold** for key names/figures, bullet lists for takeaways, markdown tables when comparing 3+ items
+- Cite inline with [n] matching result numbers on every factual claim (e.g. "revenue grew 12% [2]")
+- Synthesize across sources; never paste raw snippets or list URLs in prose
+- Do NOT add a separate "Sources" or "References" section — the UI shows source cards automatically
+
+If no [Web search results] block appears, answer from training data without mentioning search.`
     : "";
 
   return `${LUNA_IDENTITY}

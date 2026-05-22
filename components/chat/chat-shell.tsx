@@ -8,9 +8,12 @@ import { SettingsModal } from "./settings-modal";
 import { SandboxPanel } from "./sandbox-panel";
 import { Dock } from "./dock";
 import { useChat } from "@/lib/use-chat";
+import { useStoresHydrated } from "@/lib/use-stores-hydrated";
 import { useLunaStore } from "@/stores/use-luna-store";
+import { ChatShellSkeleton } from "./chat-shell-skeleton";
 
 export function ChatShell() {
+  const storesHydrated = useStoresHydrated();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const { sendMessage, stop, regenerate } = useChat();
@@ -41,6 +44,10 @@ export function ChatShell() {
     createConversation();
     setSidebarOpen(false);
   }, [createConversation]);
+
+  if (!storesHydrated) {
+    return <ChatShellSkeleton />;
+  }
 
   return (
     <div className="flex h-full w-full relative">

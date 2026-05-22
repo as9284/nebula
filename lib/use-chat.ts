@@ -103,8 +103,13 @@ export function useChat() {
         if (willSearch) {
           try {
             const { query: searchQuery, topic } = buildSearchQuery(text);
-            const results = await searchWeb(searchQuery, tavilyKey, topic);
-            userContent = `[Web search results]\n${results}\n\n[User question]\n${text}`;
+            const search = await searchWeb(searchQuery, tavilyKey, topic);
+            if (search.sources.length > 0) {
+              useLunaStore
+                .getState()
+                .setMessageSources(convId, assistantId, search.sources);
+            }
+            userContent = `[Web search results]\n${search.results}\n\n[User question]\n${text}`;
           } catch {
             // continue without search
           }

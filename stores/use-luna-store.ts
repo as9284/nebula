@@ -34,6 +34,11 @@ interface LunaState {
     messageId: string,
     results: import("@/lib/constellation-registry").ActionResult[],
   ) => void;
+  setMessageSources: (
+    conversationId: string,
+    messageId: string,
+    sources: import("@/types/search").SearchSource[],
+  ) => void;
   addMemories: (texts: string[]) => void;
   removeMemory: (id: string) => void;
   setMemories: (memories: Memory[]) => void;
@@ -135,6 +140,20 @@ export const useLunaStore = create<LunaState>()(
       setActionResults: (messageId, results) =>
         set((s) => ({
           actionResults: { ...s.actionResults, [messageId]: results },
+        })),
+      setMessageSources: (conversationId, messageId, sources) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === messageId ? { ...m, sources } : m,
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
         })),
       addMemories: (texts) =>
         set((s) => {

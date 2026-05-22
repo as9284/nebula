@@ -1,6 +1,8 @@
 import { tavily } from "@tavily/core";
 import type { TavilySearchOptions } from "@tavily/core";
 import type { SearchTopic } from "@/lib/search-query";
+import { formatSearchForModel } from "@/lib/search-format";
+import type { SearchSource } from "@/types/search";
 
 export async function POST(req: Request) {
   const apiKey = req.headers.get("x-tavily-key");
@@ -29,18 +31,21 @@ export async function POST(req: Request) {
     }
 
     const result = await client.search(query, options);
-    const snippets = (result.results ?? [])
-      .map(
-        (r, i) =>
-          `[${i + 1}] ${r.title}\n${r.url}${r.publishedDate ? `\nPublished: ${r.publishedDate}` : ""}\n${r.content ?? ""}`,
-      )
-      .join("\n\n");
+    const sources: SearchSource[] = (result.results ?? []).map((r, i) => ({
+      index: i + 1,
+      title: r.title ?? "Untitled",
+      url: r.url,
+      snippet: (r.content ?? "").slice(0, 280),
+      publishedDate: r.publishedDate,
+    }));
 
-    const formatted = result.answer
-      ? `Summary: ${result.answer}\n\n${snippets}`
-      : snippets;
+    const formatted = formatSearchForModel(sources, result.answer);
 
-    return Response.json({ results: formatted || "No results found." });
+    return Response.json({
+      results: formatted || "No results found.",
+      sources,
+      answer: result.answer,
+    });
   } catch (e) {
     return Response.json({ error: String(e) }, { status: 500 });
   }

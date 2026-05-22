@@ -1,4 +1,5 @@
 import type { SearchTopic } from "@/lib/search-query";
+import type { WebSearchResponse } from "@/types/search";
 
 export interface StreamMessage {
   role: "user" | "assistant" | "system";
@@ -69,7 +70,7 @@ export async function searchWeb(
   query: string,
   tavilyKey: string,
   topic: SearchTopic = "general",
-): Promise<string> {
+): Promise<WebSearchResponse> {
   const res = await fetch("/api/search", {
     method: "POST",
     headers: {
@@ -82,6 +83,10 @@ export async function searchWeb(
     const err = (await res.json()) as { error?: string };
     throw new Error(err.error ?? "Search failed");
   }
-  const data = (await res.json()) as { results: string };
-  return data.results;
+  const data = (await res.json()) as WebSearchResponse;
+  return {
+    results: data.results,
+    sources: data.sources ?? [],
+    answer: data.answer,
+  };
 }

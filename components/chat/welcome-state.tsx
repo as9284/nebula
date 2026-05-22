@@ -32,12 +32,12 @@ function Logo({ className }: { className?: string }) {
 }
 
 export function WelcomeState({ onSuggest }: { onSuggest: (text: string) => void }) {
-  const [suggestions, setSuggestions] = useState<string[]>(FALLBACK_SUGGESTIONS);
-  const [mounted, setMounted] = useState(false);
+  const [suggestions, setSuggestions] = useState(FALLBACK_SUGGESTIONS);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     setSuggestions(generateSuggestions());
-    setMounted(true);
+    setReady(true);
   }, []);
 
   return (
@@ -63,9 +63,9 @@ export function WelcomeState({ onSuggest }: { onSuggest: (text: string) => void 
               key={s}
               type="button"
               onClick={() => onSuggest(s)}
-              initial={mounted ? { opacity: 0, y: 8 } : false}
+              initial={ready ? { opacity: 0, y: 8 } : false}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3, delay: 0.1 + i * 0.05 }}
+              transition={{ duration: 0.3, delay: ready ? 0.1 + i * 0.05 : 0 }}
               className="px-5 py-2.5 rounded-full bg-surface text-sm text-text-secondary hover:text-text-primary hover:bg-surface-hover transition-colors duration-150"
             >
               {s}

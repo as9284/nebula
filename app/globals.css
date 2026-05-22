@@ -131,6 +131,53 @@ body {
   text-decoration-color: rgba(255, 255, 255, 0.6);
 }
 
+.luna-prose a.luna-citation-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.25rem;
+  height: 1.25rem;
+  padding: 0 0.35rem;
+  margin: 0 0.1rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-decoration: none;
+  color: var(--color-luna);
+  background: rgba(138, 120, 230, 0.14);
+  border: 1px solid rgba(138, 120, 230, 0.28);
+  border-radius: 6px;
+  vertical-align: 0.15em;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.luna-prose a.luna-citation-link:hover {
+  background: rgba(138, 120, 230, 0.22);
+  border-color: rgba(138, 120, 230, 0.45);
+  text-decoration: none;
+}
+
+.luna-prose .luna-table-wrap {
+  overflow-x: auto;
+  margin: 0.75rem 0;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+}
+
+.luna-prose .luna-table-wrap table {
+  margin: 0;
+  border: none;
+  border-radius: 0;
+}
+
+.luna-prose blockquote.luna-callout {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--color-luna);
+  border-radius: 0 10px 10px 0;
+  padding: 0.625rem 0.875rem;
+  font-style: normal;
+}
+
 /* Lists */
 .luna-prose ul,
 .luna-prose ol {
