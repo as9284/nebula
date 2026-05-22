@@ -26,8 +26,9 @@ CREATE_NOTE {"title":"...","content":"..."}
 CREATE_PROJECT {"name":"...","color":"violet"}
 COMPLETE_TASK {"id":"..."}
 DELETE_TASK {"id":"..."}
+DELETE_TASKS {"ids":["id1","id2"]}
 \`\`\`
-Use task/note IDs from context when updating existing items.`,
+Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS with every active task ID from Orbit context or [Actions executed] — never refuse if IDs are available.`,
 
   buildContext(): string {
     const { tasks, notes, projects } = useOrbitStore.getState();
@@ -105,6 +106,7 @@ Use task/note IDs from context when updating existing items.`,
               type: "note_created",
               handler: "orbit-commands",
               title: note.title,
+              id: note.id,
             });
             break;
           }
@@ -119,26 +121,53 @@ Use task/note IDs from context when updating existing items.`,
               type: "project_created",
               handler: "orbit-commands",
               title: project.name,
+              id: project.id,
             });
             break;
           }
           case "COMPLETE_TASK": {
             const id = String(args.id ?? "");
-            if (id) store.completeTask(id);
+            if (!id) break;
+            const task = store.tasks.find((t) => t.id === id);
+            store.completeTask(id);
             results.push({
               type: "orbit_done",
               handler: "orbit-commands",
               title: "Task completed",
+              id,
+              taskTitle: task?.title,
             });
             break;
           }
           case "DELETE_TASK": {
             const id = String(args.id ?? "");
-            if (id) store.deleteTask(id);
+            if (!id) break;
+            const task = store.tasks.find((t) => t.id === id);
+            store.deleteTask(id);
             results.push({
               type: "orbit_done",
               handler: "orbit-commands",
               title: "Task deleted",
+              id,
+              taskTitle: task?.title,
+            });
+            break;
+          }
+          case "DELETE_TASKS": {
+            const raw = args.ids;
+            const ids = Array.isArray(raw)
+              ? raw.map((id) => String(id).trim()).filter(Boolean)
+              : [];
+            for (const id of ids) {
+              const task = store.tasks.find((t) => t.id === id);
+              if (task) store.deleteTask(id);
+            }
+            results.push({
+              type: "orbit_done",
+              handler: "orbit-commands",
+              title:
+                ids.length === 1 ? "Task deleted" : `${ids.length} tasks deleted`,
+              count: ids.length,
             });
             break;
           }

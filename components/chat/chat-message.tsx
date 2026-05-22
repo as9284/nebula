@@ -120,7 +120,7 @@ export function ChatMessage({
           <MessageSources sources={sources} />
         )}
         {actionResults && actionResults.length > 0 && (
-          <div className="mt-2">
+          <div className="mt-2 min-w-0 max-w-full">
             <ActionResults results={actionResults} />
           </div>
         )}

@@ -8,7 +8,7 @@ Local-first AI chat powered by **Luna**. Modern ChatGPT-style UX with portfolio-
 - **Orbit** — tasks, notes, projects via natural language (inline cards)
 - **Solaris** — weather via Open-Meteo
 - **Hyperlane** — URL shortening
-- **Web search** — Tavily (optional toggle)
+- **Web search** — automatic when Luna needs fresh info (built-in or Tavily)
 - **Local data** — conversations in IndexedDB; settings in localStorage
 - **Export/import** — full backup JSON + memories-only
 - **PWA** — installable, offline-ready shell
@@ -17,7 +17,7 @@ Local-first AI chat powered by **Luna**. Modern ChatGPT-style UX with portfolio-
 
 - Node.js 20+
 - [DeepSeek API key](https://platform.deepseek.com) — model `deepseek-v4-flash`
-- [Tavily API key](https://tavily.com) — optional, for web search
+- [Tavily API key](https://tavily.com) — optional, for higher-quality web search
 
 Keys are entered in **Settings** and stored in your browser only. They are sent to Next.js API routes which proxy requests — never committed to the repo.
 

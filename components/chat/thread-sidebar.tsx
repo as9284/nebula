@@ -77,7 +77,7 @@ export function ThreadSidebar({
             animate={{ x: 0 }}
             exit={{ x: -280 }}
             transition={{ type: "spring", damping: 28, stiffness: 280 }}
-            className="fixed left-0 top-0 bottom-0 z-50 w-[280px] bg-surface/95 backdrop-blur-xl border-r border-border flex flex-col"
+            className="fixed left-0 top-0 bottom-0 z-50 flex w-[min(100vw,280px)] flex-col border-r border-border bg-surface/95 pt-[env(safe-area-inset-top,0px)] backdrop-blur-xl"
           >
             <div className="p-4 flex items-center gap-2">
               <button

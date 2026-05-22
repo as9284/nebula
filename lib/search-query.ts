@@ -1,7 +1,7 @@
 export type SearchTopic = "news" | "general";
 
 export interface PreparedSearchQuery {
-  /** Query sent to Tavily (assistant name and greetings stripped). */
+  /** Query sent to the search provider (assistant name and greetings stripped). */
   query: string;
   topic: SearchTopic;
 }
@@ -11,10 +11,10 @@ const GREETING_PREFIX =
 
 const LUNA_INVOCATION = /\b(?:hey\s+)?luna\b[,!?]?\s*/gi;
 
-const NEWS_INTENT =
+export const NEWS_INTENT =
   /\b(?:news|headlines|breaking|current events|what(?:'s| is)\s+happening|today(?:'s)?\s+(?:news|events|headlines))\b/i;
 
-/** Strip chat framing so Tavily searches the user's actual topic, not "Luna". */
+/** Strip chat framing so search targets the user's actual topic, not "Luna". */
 export function buildSearchQuery(raw: string): PreparedSearchQuery {
   const original = raw.trim();
   let query = original;

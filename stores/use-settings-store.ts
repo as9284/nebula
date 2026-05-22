@@ -3,15 +3,16 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import type { LunaControls } from "@/lib/luna-prompt";
+import type { SearchProvider } from "@/types/search";
 
 interface SettingsState {
   deepseekKey: string;
   tavilyKey: string;
-  webSearchEnabled: boolean;
+  searchProvider: SearchProvider;
   lunaControls: LunaControls;
   setDeepseekKey: (key: string) => void;
   setTavilyKey: (key: string) => void;
-  setWebSearchEnabled: (enabled: boolean) => void;
+  setSearchProvider: (provider: SearchProvider) => void;
   setLunaControls: (partial: Partial<LunaControls>) => void;
 }
 
@@ -31,16 +32,28 @@ export const useSettingsStore = create<SettingsState>()(
     (set) => ({
       deepseekKey: "",
       tavilyKey: "",
-      webSearchEnabled: false,
+      searchProvider: "builtin",
       lunaControls: defaultControls,
       setDeepseekKey: (deepseekKey) => set({ deepseekKey }),
       setTavilyKey: (tavilyKey) => set({ tavilyKey }),
-      setWebSearchEnabled: (webSearchEnabled) => set({ webSearchEnabled }),
+      setSearchProvider: (searchProvider) => set({ searchProvider }),
       setLunaControls: (partial) =>
         set((s) => ({
           lunaControls: { ...s.lunaControls, ...partial },
         })),
     }),
-    { name: "nebula-settings", storage: createJSONStorage(() => localStorage) },
+    {
+      name: "nebula-settings",
+      storage: createJSONStorage(() => localStorage),
+      version: 2,
+      migrate: (persisted) => {
+        const state = persisted as SettingsState & { webSearchEnabled?: boolean };
+        const { webSearchEnabled: _, ...rest } = state;
+        return {
+          ...rest,
+          searchProvider: state.searchProvider ?? "builtin",
+        };
+      },
+    },
   ),
 );

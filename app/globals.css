@@ -45,7 +45,24 @@ body {
 
 .nebula-chat-scroll {
   overscroll-behavior-y: contain;
-  scroll-padding-bottom: 10rem;
+  scroll-padding-bottom: calc(10rem + var(--nebula-safe-bottom));
+}
+
+.nebula-chat-inset-x {
+  padding-left: max(0.75rem, env(safe-area-inset-left, 0px));
+  padding-right: max(0.75rem, env(safe-area-inset-right, 0px));
+}
+
+.nebula-chat-bottom-pad {
+  padding-bottom: calc(11rem + var(--nebula-safe-bottom));
+}
+
+.nebula-composer-offset {
+  bottom: calc(7rem + var(--nebula-safe-bottom));
+}
+
+.nebula-dock-offset {
+  bottom: calc(1.25rem + var(--nebula-safe-bottom));
 }
 
 .luna-prose {
@@ -327,6 +344,8 @@ body {
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 1rem;
+  max-width: 100%;
+  min-width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: 10px;

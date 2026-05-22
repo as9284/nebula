@@ -5,7 +5,9 @@ import { useLunaStore } from "@/stores/use-luna-store";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { buildLunaSystemPrompt } from "@/lib/luna-prompt";
 import { constellationHandlers } from "@/lib/constellations";
-import { streamChat, searchWeb } from "@/lib/stream-client";
+import { buildSearchContext, decideWebSearch } from "@/lib/search-decision";
+import { isWebSearchAvailable } from "@/lib/search-provider";
+import { completeText, searchWeb, streamChat } from "@/lib/stream-client";
 import { executeCommandsFromResponse } from "@/lib/commands";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
@@ -14,18 +16,30 @@ import type { ChatMessage } from "@/types/chat";
 import { getSandboxPayload } from "@/lib/constellations/sandbox";
 import type { StreamMessage } from "@/lib/stream-client";
 import { buildSearchQuery } from "@/lib/search-query";
+import { formatActionResultsForHistory } from "@/lib/action-result-history";
+import type { ActionResult } from "@/lib/constellation-registry";
 
 function buildChatHistory(
   messages: ChatMessage[],
   excludeMessageId: string,
   latestUserContent: string,
+  actionResults: Record<string, ActionResult[]>,
 ): StreamMessage[] {
   const history = messages
     .filter((m) => m.id !== excludeMessageId)
-    .map((m) => ({
-      role: m.role as "user" | "assistant",
-      content: m.content,
-    }));
+    .map((m) => {
+      let content = m.content;
+      if (m.role === "assistant") {
+        const executed = actionResults[m.id];
+        if (executed?.length) {
+          content += formatActionResultsForHistory(executed);
+        }
+      }
+      return {
+        role: m.role as "user" | "assistant",
+        content,
+      };
+    });
 
   for (let i = history.length - 1; i >= 0; i--) {
     if (history[i].role === "user") {
@@ -45,8 +59,9 @@ export function useChat() {
       const text = rawText.trim();
       if (!text) return;
 
-      const { deepseekKey, tavilyKey, webSearchEnabled, lunaControls } =
+      const { deepseekKey, tavilyKey, searchProvider, lunaControls } =
         useSettingsStore.getState();
+      const searchAvailable = isWebSearchAvailable(searchProvider, tavilyKey);
       if (!deepseekKey) return;
 
       let convId = useLunaStore.getState().activeConversationId;
@@ -73,10 +88,7 @@ export function useChat() {
       useLunaStore.getState().addMessage(convId, assistantMsg);
       useLunaStore.getState().setStreaming(true);
 
-      const willSearch = webSearchEnabled && !!tavilyKey;
-      useLunaStore
-        .getState()
-        .setStreamPhase(willSearch ? "searching" : "thinking");
+      useLunaStore.getState().setStreamPhase("thinking");
 
       const slash = text.startsWith("/") ? slashToParsedCommands(text) : null;
 
@@ -100,34 +112,65 @@ export function useChat() {
         }
 
         let userContent = text;
-        if (willSearch) {
+
+        if (searchAvailable) {
           try {
-            const { query: searchQuery, topic } = buildSearchQuery(text);
-            const search = await searchWeb(searchQuery, tavilyKey, topic);
-            if (search.sources.length > 0) {
-              useLunaStore
-                .getState()
-                .setMessageSources(convId, assistantId, search.sources);
+            const convForSearch = useLunaStore
+              .getState()
+              .conversations.find((c) => c.id === convId);
+            const recentContext = convForSearch
+              ? buildSearchContext(convForSearch.messages, userMsg.id)
+              : undefined;
+
+            const decision = await decideWebSearch(
+              text,
+              (prompt) => completeText(prompt, deepseekKey),
+              recentContext,
+            );
+
+            if (decision.search) {
+              useLunaStore.getState().setStreamPhase("searching");
+              const { query: searchQuery, topic } = buildSearchQuery(
+                decision.query,
+              );
+              const mergedTopic =
+                decision.topic === "news" || topic === "news" ? "news" : topic;
+
+              const search = await searchWeb(
+                searchQuery,
+                searchProvider,
+                tavilyKey,
+                mergedTopic,
+              );
+              if (search.sources.length > 0) {
+                useLunaStore
+                  .getState()
+                  .setMessageSources(convId, assistantId, search.sources);
+                userContent = `[Web search results]\n${search.results}\n\n[User question]\n${text}`;
+              }
             }
-            userContent = `[Web search results]\n${search.results}\n\n[User question]\n${text}`;
           } catch {
             // continue without search
           }
           useLunaStore.getState().setStreamPhase("thinking");
         }
 
-        const conv = useLunaStore
-          .getState()
-          .conversations.find((c) => c.id === convId);
+        const state = useLunaStore.getState();
+        const conv = state.conversations.find((c) => c.id === convId);
         const history = conv
-          ? buildChatHistory(conv.messages, assistantId, userContent)
+          ? buildChatHistory(
+              conv.messages,
+              assistantId,
+              userContent,
+              state.actionResults,
+            )
           : [];
 
         const systemPrompt = buildLunaSystemPrompt(
           constellationHandlers,
-          useLunaStore.getState().memories,
+          state.memories,
           lunaControls,
-          webSearchEnabled,
+          searchAvailable,
         );
 
         abortRef.current = new AbortController();

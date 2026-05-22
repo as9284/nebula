@@ -19,7 +19,8 @@ export const nebulaBackupSchema = z.object({
     settings: z.object({
       deepseekKey: z.string().optional(),
       tavilyKey: z.string().optional(),
-      webSearchEnabled: z.boolean(),
+      searchProvider: z.enum(["builtin", "tavily"]).optional(),
+      webSearchEnabled: z.boolean().optional(),
       lunaControls: lunaControlsSchema,
     }),
     luna: z.object({

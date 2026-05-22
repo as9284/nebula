@@ -1,0 +1,58 @@
+import type { ActionResult } from "@/lib/constellation-registry";
+
+const HISTORY_HEADER =
+  "\n\n[Actions executed — saved in Nebula; use these IDs for follow-up commands]";
+
+function formatOneResult(result: ActionResult): string | null {
+  switch (result.type) {
+    case "task_created": {
+      const id = String(result.id ?? "").trim();
+      const title = String(result.title ?? "").trim();
+      if (!id || !title) return null;
+      return `- Created task [${id}] "${title}"`;
+    }
+    case "note_created": {
+      const id = String(result.id ?? "").trim();
+      const title = String(result.title ?? "").trim();
+      if (!id || !title) return null;
+      return `- Created note [${id}] "${title}"`;
+    }
+    case "project_created": {
+      const id = String(result.id ?? "").trim();
+      const title = String(result.title ?? "").trim();
+      if (!id || !title) return null;
+      return `- Created project [${id}] "${title}"`;
+    }
+    case "orbit_done": {
+      const id = String(result.id ?? "").trim();
+      const title = String(result.title ?? "Done");
+      const taskTitle = String(result.taskTitle ?? "").trim();
+      if (id && taskTitle) {
+        return `- ${title}: [${id}] "${taskTitle}"`;
+      }
+      if (id) return `- ${title} [${id}]`;
+      return `- ${title}`;
+    }
+    case "orbit_error":
+      return `- Error: ${String(result.message ?? "unknown")}`;
+    case "weather":
+      return `- Fetched weather for ${String(result.location ?? "location")}`;
+    case "short_url":
+      return `- Shortened URL → ${String(result.short ?? "")}`;
+    case "sandbox_open":
+      return `- Opened sandbox (${String(result.sandboxType ?? "code")})`;
+    default:
+      return null;
+  }
+}
+
+/** Append to assistant turns in API history only (not shown in the chat UI). */
+export function formatActionResultsForHistory(
+  results: ActionResult[],
+): string {
+  const lines = results
+    .map(formatOneResult)
+    .filter((line): line is string => line !== null);
+  if (lines.length === 0) return "";
+  return `${HISTORY_HEADER}\n${lines.join("\n")}`;
+}

@@ -1,3 +1,5 @@
+export type SearchProvider = "builtin" | "tavily";
+
 export interface SearchSource {
   index: number;
   title: string;

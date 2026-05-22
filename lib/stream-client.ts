@@ -1,5 +1,5 @@
 import type { SearchTopic } from "@/lib/search-query";
-import type { WebSearchResponse } from "@/types/search";
+import type { SearchProvider, WebSearchResponse } from "@/types/search";
 
 export interface StreamMessage {
   role: "user" | "assistant" | "system";
@@ -68,16 +68,21 @@ export async function streamChat(
 
 export async function searchWeb(
   query: string,
+  provider: SearchProvider,
   tavilyKey: string,
   topic: SearchTopic = "general",
 ): Promise<WebSearchResponse> {
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (provider === "tavily" && tavilyKey) {
+    headers["x-tavily-key"] = tavilyKey;
+  }
+
   const res = await fetch("/api/search", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-tavily-key": tavilyKey,
-    },
-    body: JSON.stringify({ query, topic }),
+    headers,
+    body: JSON.stringify({ query, topic, provider }),
   });
   if (!res.ok) {
     const err = (await res.json()) as { error?: string };
@@ -89,4 +94,28 @@ export async function searchWeb(
     sources: data.sources ?? [],
     answer: data.answer,
   };
+}
+
+export async function completeText(
+  prompt: string,
+  deepseekKey: string,
+): Promise<string> {
+  const res = await fetch("/api/ai/text", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-deepseek-key": deepseekKey,
+    },
+    body: JSON.stringify({
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  if (!res.ok) {
+    const err = (await res.json()) as { error?: string };
+    throw new Error(err.error ?? `Classifier failed (${res.status})`);
+  }
+
+  const data = (await res.json()) as { text?: string };
+  return data.text ?? "";
 }

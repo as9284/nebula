@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Trash2, Download, Upload, KeyRound, Sparkles, Database, Plus } from "lucide-react";
 import { useState, useRef } from "react";
 import { useSettingsStore } from "@/stores/use-settings-store";
+import type { SearchProvider } from "@/types/search";
 import { useLunaStore } from "@/stores/use-luna-store";
 import { maskApiKey } from "@/lib/api-keys";
 import {
@@ -76,10 +77,10 @@ function SettingRow({
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const deepseekKey = useSettingsStore((s) => s.deepseekKey);
   const tavilyKey = useSettingsStore((s) => s.tavilyKey);
+  const searchProvider = useSettingsStore((s) => s.searchProvider);
   const setDeepseekKey = useSettingsStore((s) => s.setDeepseekKey);
   const setTavilyKey = useSettingsStore((s) => s.setTavilyKey);
-  const webSearchEnabled = useSettingsStore((s) => s.webSearchEnabled);
-  const setWebSearch = useSettingsStore((s) => s.setWebSearchEnabled);
+  const setSearchProvider = useSettingsStore((s) => s.setSearchProvider);
   const lunaControls = useSettingsStore((s) => s.lunaControls);
   const setLunaControls = useSettingsStore((s) => s.setLunaControls);
   const memories = useLunaStore((s) => s.memories);
@@ -146,7 +147,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
 
                 <Section icon={KeyRound} title="API Keys">
                   <p className="text-xs text-text-muted">
-                    Model: deepseek-v4-pro · Search: Tavily only
+                    Model: deepseek-v4-pro · Tavily key only when using Tavily
+                    search
                   </p>
 
                   {deepseekKey && (
@@ -185,13 +187,45 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 <div className="h-px bg-border mb-8" />
 
                 <Section icon={Sparkles} title="Luna">
-                  <SettingRow label="Web search (Tavily)" disabled={!tavilyKey}>
-                    <Checkbox
-                      checked={webSearchEnabled}
-                      onChange={setWebSearch}
-                      disabled={!tavilyKey}
-                    />
-                  </SettingRow>
+                  <div>
+                    <label className="block text-sm text-text-secondary mb-2">
+                      Web search provider
+                    </label>
+                    <div className="flex gap-1 p-1 rounded-xl bg-bg border border-border">
+                      {(
+                        [
+                          { value: "builtin", label: "Built-in" },
+                          { value: "tavily", label: "Tavily" },
+                        ] as const
+                      ).map(({ value, label }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          onClick={() =>
+                            setSearchProvider(value as SearchProvider)
+                          }
+                          className={cn(
+                            "flex-1 px-3 py-2 rounded-lg text-sm font-medium transition-colors",
+                            searchProvider === value
+                              ? "bg-surface-elevated text-text-primary shadow-sm"
+                              : "text-text-muted hover:text-text-secondary",
+                          )}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                    <p className="mt-2 text-xs text-text-muted">
+                      {searchProvider === "builtin"
+                        ? "Luna searches automatically when needed (Google News + web, no key)."
+                        : "Luna searches automatically when needed — Tavily key required above."}
+                    </p>
+                  </div>
+                  {searchProvider === "tavily" && !tavilyKey && (
+                    <p className="text-xs text-amber-400/90">
+                      Add a Tavily API key or switch to Built-in search.
+                    </p>
+                  )}
 
                   <div>
                     <label className="block text-sm text-text-secondary mb-2">

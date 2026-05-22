@@ -55,7 +55,7 @@ export function MessageList({
     <div
       ref={scrollRef}
       onScroll={onScroll}
-      className="nebula-chat-scroll flex-1 overflow-y-auto px-4 pb-40 pt-4"
+      className="nebula-chat-scroll nebula-chat-inset-x nebula-chat-bottom-pad flex-1 overflow-y-auto pt-[max(1rem,env(safe-area-inset-top,0px))]"
     >
       <div className="max-w-3xl mx-auto w-full">
         {messages.map((msg) => {

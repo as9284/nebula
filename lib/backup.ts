@@ -21,7 +21,7 @@ export function gatherBackupData(includeApiKeys: boolean): NebulaBackup["data"] 
             tavilyKey: settings.tavilyKey,
           }
         : {}),
-      webSearchEnabled: settings.webSearchEnabled,
+      searchProvider: settings.searchProvider,
       lunaControls: settings.lunaControls,
     },
     luna: {
@@ -82,7 +82,11 @@ export function applyBackup(backup: NebulaBackup): void {
   if (data.settings.tavilyKey !== undefined) {
     settings.setTavilyKey(data.settings.tavilyKey);
   }
-  settings.setWebSearchEnabled(data.settings.webSearchEnabled);
+  if (data.settings.searchProvider) {
+    settings.setSearchProvider(
+      data.settings.searchProvider as import("@/types/search").SearchProvider,
+    );
+  }
   settings.setLunaControls(data.settings.lunaControls);
 
   useLunaStore.getState().setConversations(

@@ -12,11 +12,25 @@ export function TaskCard({ result }: { result: ActionResult }) {
     );
   }
   const title = String(result.title ?? "Task");
+  const label =
+    result.type === "task_created"
+      ? "Task created"
+      : result.type === "note_created"
+        ? "Note created"
+        : result.type === "project_created"
+          ? "Project created"
+          : title;
+
   return (
     <div className="tool-card">
       <ListTodo size={14} className="text-text-secondary shrink-0" />
       <span>
-        {result.type === "task_created" ? "Task created" : "Orbit"}: {title}
+        {label}
+        {result.type === "task_created" ||
+        result.type === "note_created" ||
+        result.type === "project_created"
+          ? ` · ${title}`
+          : null}
       </span>
     </div>
   );
