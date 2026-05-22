@@ -1,3 +1,9 @@
+# Nebula monorepo
+
+- **Web:** `apps/web` (Next.js) — run `npm run dev:web` from repo root
+- **Android:** `apps/mobile` (Expo) — see `apps/mobile/docs/BUILD.md`
+- **Shared:** `packages/core`, `packages/theme`
+
 <!-- BEGIN:nextjs-agent-rules -->
 # This is NOT the Next.js you know
 

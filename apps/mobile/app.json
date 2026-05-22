@@ -1,0 +1,41 @@
+{
+  "expo": {
+    "name": "Nebula",
+    "slug": "nebula",
+    "version": "0.1.0",
+    "scheme": "nebula",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#171714"
+    },
+    "android": {
+      "package": "com.as9284.nebula",
+      "adaptiveIcon": {
+        "backgroundColor": "#171714",
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundImage": "./assets/android-icon-background.png"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      "expo-secure-store",
+      [
+        "expo-build-properties",
+        {
+          "android": {
+            "minSdkVersion": 24
+          }
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

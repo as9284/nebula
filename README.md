@@ -1,88 +1,56 @@
 # Nebula
 
-Local-first AI chat powered by **Luna**. Modern ChatGPT-style UX with portfolio-minimal visuals.
+Local-first AI chat powered by **Luna**. Monorepo: Next.js web app + Expo Android.
 
-## Features
+## Structure
 
-- **Luna chat** — streaming markdown, threads, stop/regenerate/edit/copy
-- **Orbit** — tasks, notes, projects via natural language (inline cards)
-- **Solaris** — weather via Open-Meteo
-- **Hyperlane** — URL shortening
-- **Web search** — automatic when Luna needs fresh info (built-in or Tavily)
-- **Local data** — conversations in IndexedDB; settings in localStorage
-- **Export/import** — full backup JSON + memories-only
-- **Cloud sync** — optional Supabase backup of chats, memories, Orbit, and settings (not API keys)
-- **PWA** — installable, offline-ready shell
+| Path | Description |
+|------|-------------|
+| [apps/web](apps/web) | Next.js 16 PWA (deploy to Vercel) |
+| [apps/mobile](apps/mobile) | Expo Android app (local APK) |
+| [packages/core](packages/core) | Shared logic (AI, search, backup, types) |
+| [packages/theme](packages/theme) | Design tokens (dark/light) |
+
+## Web
+
+```bash
+npm install
+cp .env.example apps/web/.env.local   # optional Supabase
+npm run dev:web
+```
+
+Open http://localhost:3000
+
+### Vercel
+
+In the Vercel project, set **Root Directory** to `apps/web`.  
+[apps/web/vercel.json](apps/web/vercel.json) runs `npm install` from the monorepo root so workspace packages (`@nebula/core`, `@nebula/theme`) resolve on every deploy.
+
+## Android
+
+See [apps/mobile/docs/BUILD.md](apps/mobile/docs/BUILD.md) for local APK builds (no EAS cloud).
+
+```bash
+npm install
+npm run android -w @nebula/mobile
+```
+
+SDK path: `C:\Android\Sdk` via `apps/mobile/android-sdk.path` (see [BUILD.md](apps/mobile/docs/BUILD.md)).
+
+API keys are entered in **Settings** on the device (Android Keystore). Add `nebula://auth/callback` to Supabase redirect URLs for magic link sign-in.
 
 ## Requirements
 
 - Node.js 20+
-- [DeepSeek API key](https://platform.deepseek.com) — model `deepseek-v4-flash`
-- [Tavily API key](https://tavily.com) — optional, for higher-quality web search
+- [DeepSeek API key](https://platform.deepseek.com)
+- [Tavily API key](https://tavily.com) — optional, for Tavily search
 
-Keys are entered in **Settings** and stored in your browser only. They are sent to Next.js API routes which proxy requests — never committed to the repo.
+## Cloud sync (optional)
 
-### Cloud sync (optional)
+Set in `apps/web/.env.local` or `apps/mobile/.env`:
 
-Copy `.env.example` to `.env.local` and set:
+- `NEXT_PUBLIC_SUPABASE_URL` / `EXPO_PUBLIC_SUPABASE_URL`
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` / `EXPO_PUBLIC_SUPABASE_ANON_KEY`
+- `NEXT_PUBLIC_SITE_URL` — web production URL for magic links
 
-- `NEXT_PUBLIC_SUPABASE_URL` — Project URL from Supabase dashboard
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY` — anon/public key
-- `NEXT_PUBLIC_SITE_URL` — **production only** (Vercel env): your live app URL, e.g. `https://nebula.vercel.app` (no trailing slash). Magic links use this so emails never point at `localhost`.
-
-In **Settings → Account**, sign in with a **magic link** email. Data syncs automatically (debounced) when chats, memories, or Orbit data change. API keys are never uploaded.
-
-**Supabase Auth setup** (dashboard → Authentication → URL configuration) — **both** must match your real URLs:
-
-1. **Site URL:** your production URL (e.g. `https://nebula.vercel.app`), **not** `http://localhost:3000` unless you only develop locally. If Site URL is localhost, production magic links in email will open localhost and fail.
-2. **Redirect URLs** (add every URL you use):
-   - `http://localhost:3000/auth/callback`
-   - `https://<your-production-domain>/auth/callback`
-
-Apply the schema from `supabase/migrations/001_user_snapshots.sql` (Supabase SQL editor or MCP `apply_migration`).
-
-## Getting started
-
-```bash
-npm install
-cp .env.example .env.local   # optional, for cloud sync
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000), add API keys in Settings, and start chatting.
-
-## Deploy to Vercel
-
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fas9284%2Fnebula)
-
-Or manually:
-
-```bash
-npm run build
-```
-
-Push to GitHub and import into [Vercel](https://vercel.com). API keys stay client-side. For cloud sync, add in Vercel **Environment Variables** (Production):
-
-- `NEXT_PUBLIC_SUPABASE_URL`
-- `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-- `NEXT_PUBLIC_SITE_URL` — same as your public app URL (required for magic links)
-
-## Scripts
-
-| Command | Description |
-|---------|-------------|
-| `npm run dev` | Development server |
-| `npm run build` | Production build |
-| `npm run start` | Start production server |
-
-## Architecture
-
-- **Next.js 16** App Router + Tailwind v4
-- **Zustand** persist — IndexedDB (Luna, Orbit), localStorage (settings, Solaris, Hyperlane)
-- **BFF routes** — `/api/chat/stream`, `/api/search`, `/api/ai/text`, `/api/shorten`
-- **Supabase** — magic-link auth, `user_snapshots` JSON backup per user (RLS)
-- **Constellation handlers** — Luna tool commands (fenced blocks) from [project-starfield](https://github.com/as9284/project-starfield), adapted for unified web chat
-
-## License
-
-MIT
+Apply [supabase/migrations/001_user_snapshots.sql](apps/web/supabase/migrations/001_user_snapshots.sql).
