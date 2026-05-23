@@ -1,3 +1,3 @@
 @AGENTS.md
 
-Monorepo: web app in `apps/web`, Android in `apps/mobile`, shared logic in `packages/core`.
+Monorepo: web app in `apps/web`, shared logic in `packages/core`.

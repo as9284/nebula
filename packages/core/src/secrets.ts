@@ -1,4 +1,4 @@
-/** Platform-specific secret storage (SecureStore on mobile, settings on web). */
+/** Platform-specific secret storage (browser settings on web). */
 export interface NebulaSecretsAdapter {
   getDeepseekKey(): Promise<string>;
   setDeepseekKey(value: string): Promise<void>;

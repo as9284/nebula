@@ -6,23 +6,15 @@
     "apps/*",
     "packages/*"
   ],
-  "overrides": {
-    "@nebula/mobile": {
-      "tailwindcss": "3.4.17"
-    },
-    "nativewind": {
-      "tailwindcss": "3.4.17"
-    }
+  "dependencies": {
+    "@supabase/supabase-js": "^2.106.1"
   },
   "scripts": {
     "dev": "npm run dev -w @nebula/web",
     "dev:web": "npm run dev -w @nebula/web",
-    "dev:mobile": "npm run dev -w @nebula/mobile",
     "build": "npm run build -w @nebula/core && npm run build -w @nebula/web",
     "build:web": "npm run build -w @nebula/web",
     "build:core": "npm run build -w @nebula/core",
-    "lint": "npm run lint -w @nebula/web",
-    "prebuild:android": "npm run prebuild:android -w @nebula/mobile",
-    "android": "npm run android -w @nebula/mobile"
+    "lint": "npm run lint -w @nebula/web"
   }
 }
