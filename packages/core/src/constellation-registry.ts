@@ -37,28 +37,53 @@ function getCommandBlockBody(response: string, tag: string): string | null {
   return match?.[1] ?? null;
 }
 
+export interface ParseCommandsResult {
+  commands: ParsedCommand[];
+  errors: ActionResult[];
+}
+
 export function parseCommands(
   response: string,
   tag: string,
   multi: boolean,
 ): ParsedCommand[] {
+  return parseCommandsDetailed(response, tag, multi).commands;
+}
+
+export function parseCommandsDetailed(
+  response: string,
+  tag: string,
+  multi: boolean,
+): ParseCommandsResult {
   const body = getCommandBlockBody(response, tag);
-  if (!body) return [];
+  if (!body) return { commands: [], errors: [] };
 
   const lines = multi ? body.trim().split("\n") : [body.trim().split("\n")[0]];
 
-  return lines.flatMap((line) => {
+  const commands: ParsedCommand[] = [];
+  const errors: ActionResult[] = [];
+
+  for (const line of lines) {
     const trimmed = line.trim();
-    if (!trimmed) return [];
+    if (!trimmed) continue;
     const spaceIdx = trimmed.indexOf(" ");
     const command = spaceIdx === -1 ? trimmed : trimmed.slice(0, spaceIdx);
     const jsonStr = spaceIdx === -1 ? "{}" : trimmed.slice(spaceIdx + 1);
     try {
-      return [{ command, args: JSON.parse(jsonStr) as Record<string, unknown> }];
+      commands.push({
+        command,
+        args: JSON.parse(jsonStr) as Record<string, unknown>,
+      });
     } catch {
-      return [];
+      errors.push({
+        type: tag === "orbit-commands" ? "orbit_error" : "command_error",
+        handler: tag,
+        message: `Invalid JSON for ${command}`,
+      });
     }
-  });
+  }
+
+  return { commands, errors };
 }
 
 export function stripCommandBlocks(

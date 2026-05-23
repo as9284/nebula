@@ -9,12 +9,14 @@
     "./*": "./src/*"
   },
   "scripts": {
-    "build": "tsc -p tsconfig.json --noEmit"
+    "build": "tsc -p tsconfig.json --noEmit",
+    "test": "node --import tsx --test src/reasoning-stream.test.ts"
   },
   "dependencies": {
     "zod": "^4.4.3"
   },
   "devDependencies": {
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }

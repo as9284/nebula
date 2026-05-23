@@ -49,13 +49,34 @@ function groupHeading(type: string, items: ActionResult[]): string {
       ? "Sandbox opened"
       : `${count} sandboxes opened`;
   }
+  if (type === "memory_saved") {
+    return count === 1 ? "Saved to memory" : `${count} memories saved`;
+  }
+  if (type === "memory_removed") {
+    return count === 1 ? "Removed from memory" : `${count} memories removed`;
+  }
+  if (type === "memory_error") {
+    const msg = String(items[0]?.message ?? "Error");
+    return count === 1 ? msg : `${count} memory errors`;
+  }
+  if (type === "command_error") {
+    const msg = String(items[0]?.message ?? "Invalid command");
+    return count === 1 ? msg : `${count} command errors`;
+  }
   return count === 1
     ? String(items[0]?.title ?? items[0]?.message ?? type)
     : `${count} actions`;
 }
 
 function groupDetails(type: string, items: ActionResult[]): string[] {
-  if (type === "orbit_done" || type === "orbit_error") return [];
+  if (
+    type === "orbit_done" ||
+    type === "orbit_error" ||
+    type === "memory_error" ||
+    type === "command_error"
+  ) {
+    return [];
+  }
   const details: string[] = [];
   for (const item of items) {
     let d: string;
@@ -63,6 +84,8 @@ function groupDetails(type: string, items: ActionResult[]): string[] {
       d = String(item.message ?? "");
     } else if (type === "sandbox_open") {
       d = `${String(item.sandboxType ?? "code")} — see side panel`;
+    } else if (type === "memory_saved" || type === "memory_removed") {
+      d = String(item.text ?? item.title ?? "").trim();
     } else {
       d = String(item.title ?? "").trim();
     }

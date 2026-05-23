@@ -1,5 +1,5 @@
 import {
-  parseCommands,
+  parseCommandsDetailed,
   hasCommandBlocks,
   stripCommandBlocks,
   type ActionResult,
@@ -16,11 +16,14 @@ export async function executeCommandsFromResponse(
   const allResults: ActionResult[] = [];
 
   for (const handler of constellationHandlers) {
-    const commands = parseCommands(
+    const { commands, errors } = parseCommandsDetailed(
       content,
       handler.tag,
       handler.multiCommand,
     );
+    if (errors.length > 0) {
+      allResults.push(...errors);
+    }
     if (commands.length > 0) {
       const results = await handler.execute(commands);
       allResults.push(...results);

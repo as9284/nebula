@@ -19,16 +19,27 @@ export const orbitHandler: ConstellationHandler = {
   name: "Orbit",
   multiCommand: true,
 
-  promptInstructions: `### Orbit — Tasks, Notes, Projects
+  promptInstructions: `### Orbit — Tasks, Notes, Projects (productivity app)
+Use for todos, user-visible notes, and projects — NOT for Luna cross-chat memories (use memory-commands SAVE_MEMORY instead).
+
 \`\`\`orbit-commands
 CREATE_TASK {"title":"...","priority":"low|medium|high","dueDate":"YYYY-MM-DD"}
-CREATE_NOTE {"title":"...","content":"..."}
-CREATE_PROJECT {"name":"...","color":"violet"}
+UPDATE_TASK {"id":"...","title":"...","priority":"low|medium|high","dueDate":"YYYY-MM-DD"}
 COMPLETE_TASK {"id":"..."}
 DELETE_TASK {"id":"..."}
 DELETE_TASKS {"ids":["id1","id2"]}
+CREATE_NOTE {"title":"...","content":"..."}
+UPDATE_NOTE {"id":"...","title":"...","content":"..."}
+DELETE_NOTE {"id":"..."}
+CREATE_PROJECT {"name":"...","color":"violet"}
+DELETE_PROJECT {"id":"..."}
 \`\`\`
-Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS with every active task ID from Orbit context or [Actions executed] — never refuse if IDs are available.`,
+
+Rules:
+- Put command blocks only at the very end of your reply; never show JSON or fences in prose.
+- Confirm actions in one short natural sentence; the UI shows result cards.
+- Use IDs from Orbit context or [Actions executed] for updates/deletes.
+- For "delete them/all", use DELETE_TASKS with every active task ID — never refuse if IDs are available.`,
 
   buildContext(): string {
     const { tasks, notes, projects } = useOrbitStore.getState();
@@ -95,6 +106,35 @@ Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS
             });
             break;
           }
+          case "UPDATE_TASK": {
+            const id = String(args.id ?? "").trim();
+            if (!id) break;
+            const existing = store.tasks.find((t) => t.id === id);
+            if (!existing) break;
+            const patch: Parameters<typeof store.updateTask>[1] = {};
+            if (args.title !== undefined) patch.title = String(args.title);
+            if (args.description !== undefined) {
+              patch.description = String(args.description);
+            }
+            if (
+              args.priority !== undefined &&
+              ["low", "medium", "high"].includes(String(args.priority))
+            ) {
+              patch.priority = args.priority as TaskPriority;
+            }
+            if (args.dueDate !== undefined) {
+              patch.dueDate = String(args.dueDate);
+            }
+            store.updateTask(id, patch);
+            results.push({
+              type: "orbit_done",
+              handler: "orbit-commands",
+              title: "Task updated",
+              id,
+              taskTitle: String(args.title ?? existing.title),
+            });
+            break;
+          }
           case "CREATE_NOTE": {
             const title = String(args.title ?? "").trim();
             if (!title) break;
@@ -110,6 +150,38 @@ Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS
             });
             break;
           }
+          case "UPDATE_NOTE": {
+            const id = String(args.id ?? "").trim();
+            if (!id) break;
+            const existing = store.notes.find((n) => n.id === id);
+            if (!existing) break;
+            const patch: Parameters<typeof store.updateNote>[1] = {};
+            if (args.title !== undefined) patch.title = String(args.title);
+            if (args.content !== undefined) patch.content = String(args.content);
+            store.updateNote(id, patch);
+            results.push({
+              type: "orbit_done",
+              handler: "orbit-commands",
+              title: "Note updated",
+              id,
+              taskTitle: String(args.title ?? existing.title),
+            });
+            break;
+          }
+          case "DELETE_NOTE": {
+            const id = String(args.id ?? "").trim();
+            if (!id) break;
+            const note = store.notes.find((n) => n.id === id);
+            store.deleteNote(id);
+            results.push({
+              type: "orbit_done",
+              handler: "orbit-commands",
+              title: "Note deleted",
+              id,
+              taskTitle: note?.title,
+            });
+            break;
+          }
           case "CREATE_PROJECT": {
             const name = String(args.name ?? "").trim();
             if (!name) break;
@@ -122,6 +194,20 @@ Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS
               handler: "orbit-commands",
               title: project.name,
               id: project.id,
+            });
+            break;
+          }
+          case "DELETE_PROJECT": {
+            const id = String(args.id ?? "").trim();
+            if (!id) break;
+            const project = store.projects.find((p) => p.id === id);
+            store.deleteProject(id);
+            results.push({
+              type: "orbit_done",
+              handler: "orbit-commands",
+              title: "Project deleted",
+              id,
+              taskTitle: project?.name,
             });
             break;
           }
@@ -172,6 +258,11 @@ Tasks you create are stored immediately. For "delete them/all", use DELETE_TASKS
             break;
           }
           default:
+            results.push({
+              type: "orbit_error",
+              handler: "orbit-commands",
+              message: `Unknown command: ${command}`,
+            });
             break;
         }
       } catch (e) {

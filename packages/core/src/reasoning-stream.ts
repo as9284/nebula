@@ -31,31 +31,62 @@ type OpenAiDelta = {
   reasoning_details?: { type?: string; text?: string }[] | null;
 };
 
-export function parseOpenAiStreamDelta(raw: unknown): StreamDelta {
-  const choices = (raw as { choices?: { delta?: OpenAiDelta }[] })?.choices;
-  const delta = choices?.[0]?.delta;
-  if (!delta) return {};
+type OpenAiChoice = {
+  delta?: OpenAiDelta;
+  message?: { content?: string | null };
+};
 
-  const out: StreamDelta = {};
+/** Stateful parser for OpenAI-compatible SSE chunks (handles cumulative snapshots). */
+export class OpenAiStreamDeltaParser {
+  private reasoningTrackers = new Map<number, StreamFieldTracker>();
 
-  if (typeof delta.content === "string" && delta.content) {
-    out.content = delta.content;
-  }
+  parse(raw: unknown): StreamDelta {
+    const choices = (raw as { choices?: OpenAiChoice[] })?.choices;
+    const choice = choices?.[0];
+    const delta = choice?.delta;
+    const out: StreamDelta = {};
 
-  if (Array.isArray(delta.reasoning_details)) {
-    let reasoning = "";
-    for (const detail of delta.reasoning_details) {
-      if (detail?.text) reasoning += detail.text;
+    if (delta) {
+      if (typeof delta.content === "string" && delta.content) {
+        out.content = delta.content;
+      }
+
+      if (Array.isArray(delta.reasoning_details)) {
+        let reasoning = "";
+        for (let i = 0; i < delta.reasoning_details.length; i++) {
+          const detail = delta.reasoning_details[i];
+          if (!detail?.text) continue;
+          let tracker = this.reasoningTrackers.get(i);
+          if (!tracker) {
+            tracker = new StreamFieldTracker();
+            this.reasoningTrackers.set(i, tracker);
+          }
+          reasoning += tracker.push(detail.text);
+        }
+        if (reasoning) out.reasoning = reasoning;
+      } else if (
+        typeof delta.reasoning_content === "string" &&
+        delta.reasoning_content
+      ) {
+        out.reasoning = delta.reasoning_content;
+      }
     }
-    if (reasoning) out.reasoning = reasoning;
-  } else if (
-    typeof delta.reasoning_content === "string" &&
-    delta.reasoning_content
-  ) {
-    out.reasoning = delta.reasoning_content;
-  }
 
-  return out;
+    const messageContent = choice?.message?.content;
+    if (
+      !out.content &&
+      typeof messageContent === "string" &&
+      messageContent
+    ) {
+      out.content = messageContent;
+    }
+
+    return out;
+  }
+}
+
+export function parseOpenAiStreamDelta(raw: unknown): StreamDelta {
+  return new OpenAiStreamDeltaParser().parse(raw);
 }
 
 const EMBEDDED_THINK_BLOCK_RE =
@@ -183,4 +214,11 @@ export function emitStreamDelta(
 ): void {
   if (delta.content) handlers.onContent?.(delta.content);
   if (delta.reasoning) handlers.onReasoning?.(delta.reasoning);
+}
+
+/** Lets React paint between streamed tokens when many SSE lines arrive in one read. */
+export function yieldToUi(): Promise<void> {
+  return new Promise((resolve) => {
+    requestAnimationFrame(() => resolve());
+  });
 }

@@ -41,6 +41,18 @@ function formatOneResult(result: ActionResult): string | null {
       return `- Shortened URL → ${String(result.short ?? "")}`;
     case "sandbox_open":
       return `- Opened sandbox (${String(result.sandboxType ?? "code")})`;
+    case "memory_saved": {
+      const text = String(result.text ?? result.title ?? "").trim();
+      if (!text) return null;
+      return `- Saved to Luna memory: "${text}"`;
+    }
+    case "memory_removed": {
+      const text = String(result.text ?? result.title ?? "").trim();
+      if (!text) return null;
+      return `- Removed from Luna memory: "${text}"`;
+    }
+    case "memory_error":
+      return `- Memory error: ${String(result.message ?? "unknown")}`;
     default:
       return null;
   }

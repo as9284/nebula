@@ -9,7 +9,7 @@ import {
   ThinkTagStreamSplitter,
   emitStreamDelta,
   mergeThinking,
-  parseOpenAiStreamDelta,
+  OpenAiStreamDeltaParser,
   shouldUseReasoningSplit,
   splitEmbeddedThinking,
 } from "./reasoning-stream";
@@ -170,6 +170,7 @@ async function streamOpenAiCompatible(
   let content = "";
   let thinking = "";
   const useReasoningSplit = shouldUseReasoningSplit(config);
+  const deltaParser = new OpenAiStreamDeltaParser();
   const contentTracker = new StreamFieldTracker();
   const reasoningTracker = new StreamFieldTracker();
   const tagSplitter = useReasoningSplit ? null : new ThinkTagStreamSplitter();
@@ -181,7 +182,7 @@ async function streamOpenAiCompatible(
     if (data === "[DONE]") continue;
     try {
       const parsed = JSON.parse(data);
-      const delta = parseOpenAiStreamDelta(parsed);
+      const delta = deltaParser.parse(parsed);
 
       if (delta.reasoning) {
         const piece = reasoningTracker.push(delta.reasoning);

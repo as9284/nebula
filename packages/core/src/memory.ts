@@ -16,9 +16,21 @@ const PATTERNS: { regex: RegExp; extract: (match: RegExpMatchArray) => string }[
   { regex: /i speak (.+?)(?:\.|,|$)/i, extract: (m) => `User speaks ${m[1].trim()}` },
   { regex: /remind me that (.+?)(?:\.|,|$)/i, extract: (m) => `Remember: ${m[1].trim()}` },
   { regex: /i need to remember (.+?)(?:\.|,|$)/i, extract: (m) => `Remember: ${m[1].trim()}` },
+  {
+    regex: /store (?:this |that )?in memory[,:]?\s*(.+?)(?:\.|$)/i,
+    extract: (m) => m[1].trim(),
+  },
+  {
+    regex: /save to memory[,:]?\s*(.+?)(?:\.|$)/i,
+    extract: (m) => m[1].trim(),
+  },
+  {
+    regex: /remember (?:that )?(.+?)(?:\.|,|$)/i,
+    extract: (m) => `Remember: ${m[1].trim()}`,
+  },
 ];
 
-const MAX_MEMORY_LENGTH = 140;
+export const MAX_MEMORY_LENGTH = 140;
 
 export function extractMemories(userMessage: string): string[] {
   const results: string[] = [];

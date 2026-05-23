@@ -2,6 +2,7 @@
 
 import {
   AlertCircle,
+  Brain,
   CheckCircle2,
   FileText,
   FolderKanban,
@@ -24,9 +25,14 @@ function GroupIcon({ type }: { type: string }) {
         <FolderKanban size={size} className={className} strokeWidth={1.5} />
       );
     case "orbit_error":
+    case "memory_error":
+    case "command_error":
       return (
         <AlertCircle size={size} className={className} strokeWidth={1.5} />
       );
+    case "memory_saved":
+    case "memory_removed":
+      return <Brain size={size} className={className} strokeWidth={1.5} />;
     case "sandbox_open":
       return (
         <PanelRightOpen size={size} className={className} strokeWidth={1.5} />
@@ -39,7 +45,10 @@ function GroupIcon({ type }: { type: string }) {
 }
 
 export function SimpleActionGroupCard({ group }: { group: SimpleActionGroup }) {
-  const isError = group.type === "orbit_error";
+  const isError =
+    group.type === "orbit_error" ||
+    group.type === "memory_error" ||
+    group.type === "command_error";
 
   return (
     <div

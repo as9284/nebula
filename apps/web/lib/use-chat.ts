@@ -19,6 +19,7 @@ import { describeImagesForChat } from "@/lib/describe-images-client";
 import { resolveVisionHelperConfig } from "@nebula/core/vision-support";
 import { completeText, searchWeb, streamChat } from "@/lib/stream-client";
 import { executeCommandsFromResponse } from "@/lib/commands";
+import { stripCommandBlocks } from "@/lib/constellation-registry";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
 import { generateId } from "@/lib/utils";
@@ -249,6 +250,8 @@ export function useChat() {
         const abortController = new AbortController();
         setStreamAbortController(convId, abortController);
         let hasReceivedContent = false;
+        let rawContent = "";
+        let rawThinking = "";
         const streamed = await streamChat(
           history,
           systemPrompt,
@@ -256,7 +259,12 @@ export function useChat() {
           abortController.signal,
           {
             onContent: (token) => {
-              if (!hasReceivedContent) {
+              rawContent += token;
+              const display = stripCommandBlocks(
+                rawContent,
+                constellationHandlers,
+              );
+              if (!hasReceivedContent && display.trim().length > 0) {
                 hasReceivedContent = true;
                 useLunaStore
                   .getState()
@@ -264,12 +272,13 @@ export function useChat() {
               }
               useLunaStore
                 .getState()
-                .appendMessageStream(convId, assistantId, { content: token });
+                .updateMessageContent(convId, assistantId, display);
             },
             onReasoning: (token) => {
+              rawThinking += token;
               useLunaStore
                 .getState()
-                .appendMessageStream(convId, assistantId, { thinking: token });
+                .setMessageThinking(convId, assistantId, rawThinking);
             },
           },
           visionParts ? { visionParts } : undefined,
