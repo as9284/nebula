@@ -222,3 +222,23 @@ export function yieldToUi(): Promise<void> {
     requestAnimationFrame(() => resolve());
   });
 }
+
+const STREAM_SLICE_CHARS = 3;
+
+/**
+ * When a provider sends a full reply in one chunk, slice it so the UI can render incrementally.
+ */
+export async function deliverStreamingText(
+  text: string,
+  onSlice: (slice: string) => void | Promise<void>,
+): Promise<void> {
+  if (!text) return;
+  if (text.length <= STREAM_SLICE_CHARS) {
+    await onSlice(text);
+    return;
+  }
+  for (let i = 0; i < text.length; i += STREAM_SLICE_CHARS) {
+    await onSlice(text.slice(i, i + STREAM_SLICE_CHARS));
+    await yieldToUi();
+  }
+}

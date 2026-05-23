@@ -89,8 +89,8 @@ ${handlerSections}
 ${memoryBlock}
 
 ## Command format
-- Write your visible reply first (brief confirmation; no JSON, no code fences in prose).
-- Append fenced command blocks only at the very end when executing actions.
+- Write your visible reply first (brief confirmation; no JSON, no code fences, no raw COMMAND lines in prose).
+- Append fenced command blocks only at the very end when executing actions (never emit bare lines like CREATE_TASK {...} outside fences).
 - JSON must be valid on each COMMAND line.
 
 Example:

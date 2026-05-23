@@ -24,13 +24,13 @@ const PATTERNS: { regex: RegExp; extract: (match: RegExpMatchArray) => string }[
     regex: /save to memory[,:]?\s*(.+?)(?:\.|$)/i,
     extract: (m) => m[1].trim(),
   },
-  {
-    regex: /remember (?:that )?(.+?)(?:\.|,|$)/i,
-    extract: (m) => `Remember: ${m[1].trim()}`,
-  },
 ];
 
 export const MAX_MEMORY_LENGTH = 140;
+
+export function normalizeMemoryText(text: string): string {
+  return text.trim().toLowerCase();
+}
 
 export function extractMemories(userMessage: string): string[] {
   const results: string[] = [];
@@ -43,5 +43,11 @@ export function extractMemories(userMessage: string): string[] {
       }
     }
   }
-  return [...new Set(results)];
+  const seen = new Set<string>();
+  return results.filter((m) => {
+    const key = normalizeMemoryText(m);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  });
 }

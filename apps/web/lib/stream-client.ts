@@ -1,10 +1,6 @@
 import type { LlmConfig } from "@nebula/core/llm-config";
 import type { LlmContentPart } from "@nebula/core/llm";
-import {
-  OpenAiStreamDeltaParser,
-  StreamFieldTracker,
-  yieldToUi,
-} from "@nebula/core/reasoning-stream";
+import { deliverStreamingText } from "@nebula/core/reasoning-stream";
 import type { SearchTopic } from "@/lib/search-query";
 import type { SearchProvider, WebSearchResponse } from "@/types/search";
 
@@ -62,9 +58,6 @@ export async function streamChat(
   if (!reader) throw new Error("No response body");
 
   const decoder = new TextDecoder();
-  const deltaParser = new OpenAiStreamDeltaParser();
-  const contentTracker = new StreamFieldTracker();
-  const reasoningTracker = new StreamFieldTracker();
   let content = "";
   let thinking = "";
   let buffer = "";
@@ -88,33 +81,20 @@ export async function streamChat(
             delta?: { content?: string; reasoning?: string };
           }[];
         };
+        const delta = parsed.choices?.[0]?.delta;
+        if (!delta) continue;
 
-        const fromProvider = deltaParser.parse(parsed);
-        const wrapped = parsed.choices?.[0]?.delta;
-
-        let contentPiece = "";
-        if (fromProvider.content) {
-          contentPiece = contentTracker.push(fromProvider.content);
-        } else if (wrapped?.content) {
-          contentPiece = contentTracker.push(wrapped.content);
+        if (delta.content) {
+          await deliverStreamingText(delta.content, async (slice) => {
+            content += slice;
+            await handlers.onContent?.(slice);
+          });
         }
-
-        let reasoningPiece = "";
-        if (fromProvider.reasoning) {
-          reasoningPiece = reasoningTracker.push(fromProvider.reasoning);
-        } else if (wrapped?.reasoning) {
-          reasoningPiece = reasoningTracker.push(wrapped.reasoning);
-        }
-
-        if (contentPiece) {
-          content += contentPiece;
-          await handlers.onContent?.(contentPiece);
-          await yieldToUi();
-        }
-        if (reasoningPiece) {
-          thinking += reasoningPiece;
-          await handlers.onReasoning?.(reasoningPiece);
-          await yieldToUi();
+        if (delta.reasoning) {
+          await deliverStreamingText(delta.reasoning, async (slice) => {
+            thinking += slice;
+            await handlers.onReasoning?.(slice);
+          });
         }
       } catch {
         // skip malformed SSE chunks

@@ -276,9 +276,14 @@ export const useLunaStore = create<LunaState>()(
       },
       addMemories: (texts) => {
         set((s) => {
-          const existing = new Set(s.memories.map((m) => m.text));
+          const existing = new Set(
+            s.memories.map((m) => m.text.trim().toLowerCase()),
+          );
           const newMemories = texts
-            .filter((t) => !existing.has(t))
+            .filter((t) => {
+              const key = t.trim().toLowerCase();
+              return key.length > 0 && !existing.has(key);
+            })
             .map((text) => ({
               id: generateId(),
               text,

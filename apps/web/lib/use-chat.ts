@@ -19,7 +19,8 @@ import { describeImagesForChat } from "@/lib/describe-images-client";
 import { resolveVisionHelperConfig } from "@nebula/core/vision-support";
 import { completeText, searchWeb, streamChat } from "@/lib/stream-client";
 import { executeCommandsFromResponse } from "@/lib/commands";
-import { stripCommandBlocks } from "@/lib/constellation-registry";
+import { stripActionSyntax } from "@/lib/constellation-registry";
+import { flushSync } from "react-dom";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
 import { generateId } from "@/lib/utils";
@@ -260,7 +261,7 @@ export function useChat() {
           {
             onContent: (token) => {
               rawContent += token;
-              const display = stripCommandBlocks(
+              const display = stripActionSyntax(
                 rawContent,
                 constellationHandlers,
               );
@@ -270,15 +271,19 @@ export function useChat() {
                   .getState()
                   .setConversationStreamPhase(convId, "streaming");
               }
-              useLunaStore
-                .getState()
-                .updateMessageContent(convId, assistantId, display);
+              flushSync(() => {
+                useLunaStore
+                  .getState()
+                  .updateMessageContent(convId, assistantId, display);
+              });
             },
             onReasoning: (token) => {
               rawThinking += token;
-              useLunaStore
-                .getState()
-                .setMessageThinking(convId, assistantId, rawThinking);
+              flushSync(() => {
+                useLunaStore
+                  .getState()
+                  .setMessageThinking(convId, assistantId, rawThinking);
+              });
             },
           },
           visionParts ? { visionParts } : undefined,
@@ -299,9 +304,14 @@ export function useChat() {
           useLunaStore.getState().setActionResults(assistantId, results);
         }
 
-        const newMemories = extractMemories(displayContent);
-        if (newMemories.length) {
-          useLunaStore.getState().addMemories(newMemories);
+        const memoryHandledByCommand = results.some(
+          (r) => r.type === "memory_saved",
+        );
+        if (!memoryHandledByCommand) {
+          const newMemories = extractMemories(displayContent);
+          if (newMemories.length) {
+            useLunaStore.getState().addMemories(newMemories);
+          }
         }
         completedSuccessfully = true;
       } catch (e) {

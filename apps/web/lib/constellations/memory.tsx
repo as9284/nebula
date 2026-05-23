@@ -71,7 +71,12 @@ When the user says "remember", "store in memory", "don't forget", or shares a la
               });
               break;
             }
-            store.addMemories([text]);
+            const exists = store.memories.some(
+              (m) => m.text.trim().toLowerCase() === text.toLowerCase(),
+            );
+            if (!exists) {
+              store.addMemories([text]);
+            }
             results.push({
               type: "memory_saved",
               handler: "memory-commands",
