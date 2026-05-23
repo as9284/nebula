@@ -265,13 +265,13 @@ export function ChatComposer({
             </button>
           )}
         </div>
-        <p className="mt-1.5 text-[0.65rem] text-text-muted text-center px-2">
-          {modelSupportsVision(llmConfig)
-            ? "Paste screenshots or attach images — your model sees them directly."
-            : describeImagesForTextModels
+        {!modelSupportsVision(llmConfig) && (
+          <p className="mt-1.5 text-[0.65rem] text-text-muted text-center px-2">
+            {describeImagesForTextModels
               ? "Paste or attach images — they'll be described in text for your model."
               : "Paste or attach images — enable description in Settings → AI model for text-only models."}
-        </p>
+          </p>
+        )}
       </div>
     </motion.div>
   );
