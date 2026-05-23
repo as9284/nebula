@@ -7,7 +7,6 @@ import { useLunaStore } from "@/stores/use-luna-store";
 import { isConversationStreaming } from "@/lib/luna-stream-selectors";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { isLlmConfigured } from "@nebula/core/llm-config";
-import { modelSupportsVision } from "@nebula/core/vision-support";
 import {
   dataTransferToFiles,
   filesToAttachments,
@@ -36,9 +35,6 @@ export function ChatComposer({
     isConversationStreaming(s, s.activeConversationId),
   );
   const llmConfig = useSettingsStore((s) => s.llmConfig);
-  const describeImagesForTextModels = useSettingsStore(
-    (s) => s.describeImagesForTextModels,
-  );
   const [attachments, setAttachments] = useState<ChatAttachment[]>([]);
   const [attachError, setAttachError] = useState("");
   const [isDragOver, setIsDragOver] = useState(false);
@@ -265,13 +261,6 @@ export function ChatComposer({
             </button>
           )}
         </div>
-        {!modelSupportsVision(llmConfig) && (
-          <p className="mt-1.5 text-[0.65rem] text-text-muted text-center px-2">
-            {describeImagesForTextModels
-              ? "Paste or attach images — they'll be described in text for your model."
-              : "Paste or attach images — enable description in Settings → AI model for text-only models."}
-          </p>
-        )}
       </div>
     </motion.div>
   );
