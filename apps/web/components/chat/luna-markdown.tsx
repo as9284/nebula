@@ -4,6 +4,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkBreaks from "remark-breaks";
 import type { Components } from "react-markdown";
+import { ExpandableImage } from "@/components/ui/image-lightbox";
 import { linkifyCitations } from "@/lib/search-format";
 import type { SearchSource } from "@/types/search";
 
@@ -32,6 +33,19 @@ const components: Components = {
   blockquote: ({ children }) => (
     <blockquote className="luna-callout">{children}</blockquote>
   ),
+  img: ({ src, alt, title }) => {
+    const url = typeof src === "string" ? src : undefined;
+    if (!url) return null;
+    const label = alt || title || "Image";
+    return (
+      <ExpandableImage
+        src={url}
+        alt={label}
+        className="my-2"
+        imgClassName="max-h-72 w-full"
+      />
+    );
+  },
 };
 
 export function LunaMarkdown({

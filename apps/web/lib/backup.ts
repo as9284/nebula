@@ -2,6 +2,7 @@
 
 import {
   gatherBackupDataFromSnapshot,
+  migrateDeepseekKey,
   nebulaBackupSchema,
   type NebulaBackup,
 } from "@nebula/core";
@@ -21,7 +22,7 @@ function getStoreSnapshot() {
 
   return {
     settings: {
-      deepseekKey: settings.deepseekKey,
+      llmConfig: settings.llmConfig,
       tavilyKey: settings.tavilyKey,
       searchProvider: settings.searchProvider,
       lunaControls: settings.lunaControls,
@@ -82,8 +83,10 @@ export function exportMemoriesOnly(): void {
 export function applyBackup(backup: NebulaBackup): void {
   const { data } = backup;
   const settings = useSettingsStore.getState();
-  if (data.settings.deepseekKey !== undefined) {
-    settings.setDeepseekKey(data.settings.deepseekKey);
+  if (data.settings.llmConfig) {
+    settings.setLlmConfig(data.settings.llmConfig);
+  } else if (data.settings.deepseekKey !== undefined) {
+    settings.setLlmConfig(migrateDeepseekKey(data.settings.deepseekKey));
   }
   if (data.settings.tavilyKey !== undefined) {
     settings.setTavilyKey(data.settings.tavilyKey);

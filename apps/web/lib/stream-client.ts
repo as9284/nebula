@@ -1,25 +1,40 @@
+import type { LlmConfig } from "@nebula/core/llm-config";
+import type { LlmContentPart } from "@nebula/core/llm";
 import type { SearchTopic } from "@/lib/search-query";
 import type { SearchProvider, WebSearchResponse } from "@/types/search";
 
+export type StreamMessageContent = string | LlmContentPart[];
+
 export interface StreamMessage {
   role: "user" | "assistant" | "system";
-  content: string;
+  content: StreamMessageContent;
+}
+
+export interface StreamChatOptions {
+  /** Vision parts for the latest user turn (OpenAI / Anthropic). */
+  visionParts?: LlmContentPart[];
 }
 
 export async function streamChat(
   messages: StreamMessage[],
   systemPrompt: string,
-  deepseekKey: string,
+  llm: LlmConfig,
   signal: AbortSignal,
   onToken: (token: string) => void,
+  options?: StreamChatOptions,
 ): Promise<string> {
+  const payloadMessages = options?.visionParts?.length
+    ? withVisionOnLastUser(messages, options.visionParts)
+    : messages;
+
   const res = await fetch("/api/chat/stream", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-deepseek-key": deepseekKey,
-    },
-    body: JSON.stringify({ messages, systemPrompt }),
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      messages: payloadMessages,
+      systemPrompt,
+      llm,
+    }),
     signal,
   });
 
@@ -66,6 +81,26 @@ export async function streamChat(
   return full;
 }
 
+function withVisionOnLastUser(
+  messages: StreamMessage[],
+  visionParts: LlmContentPart[],
+): StreamMessage[] {
+  const out = [...messages];
+  for (let i = out.length - 1; i >= 0; i--) {
+    if (out[i].role === "user") {
+      const raw = out[i].content;
+      const textContent: string = typeof raw === "string" ? raw : "";
+      const parts: LlmContentPart[] = [
+        { type: "text", text: textContent },
+        ...visionParts,
+      ];
+      out[i] = { role: out[i].role, content: parts };
+      break;
+    }
+  }
+  return out;
+}
+
 export async function searchWeb(
   query: string,
   provider: SearchProvider,
@@ -98,16 +133,14 @@ export async function searchWeb(
 
 export async function completeText(
   prompt: string,
-  deepseekKey: string,
+  llm: LlmConfig,
 ): Promise<string> {
   const res = await fetch("/api/ai/text", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "x-deepseek-key": deepseekKey,
-    },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       messages: [{ role: "user", content: prompt }],
+      llm,
     }),
   });
 

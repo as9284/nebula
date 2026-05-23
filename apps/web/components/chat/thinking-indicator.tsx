@@ -1,16 +1,21 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, Sparkles, Pencil } from "lucide-react";
+import { Globe, Sparkles, Pencil, ImageIcon } from "lucide-react";
 
 interface ThinkingIndicatorProps {
-  phase: "searching" | "thinking" | "streaming";
+  phase: "searching" | "describing" | "thinking" | "streaming";
 }
 
 const PHASE_CONFIG = {
   searching: {
     label: "Searching the web",
     icon: Globe,
+    dotCount: 3,
+  },
+  describing: {
+    label: "Describing images",
+    icon: ImageIcon,
     dotCount: 3,
   },
   thinking: {

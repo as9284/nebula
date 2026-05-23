@@ -7,6 +7,16 @@ import { buildLunaSystemPrompt } from "@/lib/luna-prompt";
 import { constellationHandlers } from "@/lib/constellations";
 import { buildSearchContext, decideWebSearch } from "@/lib/search-decision";
 import { isWebSearchAvailable } from "@/lib/search-provider";
+import { isLlmConfigured } from "@nebula/core/llm-config";
+import {
+  buildVisionParts,
+  formatAttachmentsForDisplay,
+  modelSupportsVision,
+  toMessageImages,
+  type ChatAttachment,
+} from "@/lib/chat-attachments";
+import { describeImagesForChat } from "@/lib/describe-images-client";
+import { resolveVisionHelperConfig } from "@nebula/core/vision-support";
 import { completeText, searchWeb, streamChat } from "@/lib/stream-client";
 import { executeCommandsFromResponse } from "@/lib/commands";
 import { extractMemories } from "@/lib/memory";
@@ -60,14 +70,32 @@ function buildChatHistory(
 
 export function useChat() {
   const sendMessage = useCallback(
-    async (rawText: string) => {
+    async (rawText: string, attachments?: ChatAttachment[]) => {
       const text = rawText.trim();
-      if (!text) return;
+      const attachmentBlock = attachments?.length
+        ? formatAttachmentsForDisplay(attachments)
+        : "";
+      const displayContent = [text, attachmentBlock].filter(Boolean).join("");
+      if (!displayContent.trim()) return;
 
-      const { deepseekKey, tavilyKey, searchProvider, lunaControls } =
-        useSettingsStore.getState();
+      const {
+        llmConfig,
+        tavilyKey,
+        searchProvider,
+        lunaControls,
+        describeImagesForTextModels,
+        visionHelperConfig,
+      } = useSettingsStore.getState();
       const searchAvailable = isWebSearchAvailable(searchProvider, tavilyKey);
-      if (!deepseekKey) return;
+      if (!isLlmConfigured(llmConfig)) return;
+
+      const imageAttachments =
+        attachments?.filter((a) => a.kind === "image") ?? [];
+      const useNativeVision =
+        imageAttachments.length > 0 && modelSupportsVision(llmConfig);
+      const visionParts = useNativeVision
+        ? buildVisionParts(attachments!, llmConfig.provider)
+        : undefined;
 
       let convId = useLunaStore.getState().activeConversationId;
       if (!convId) {
@@ -77,7 +105,8 @@ export function useChat() {
       const userMsg: ChatMessage = {
         id: generateId(),
         role: "user",
-        content: text,
+        content: displayContent,
+        images: toMessageImages(attachments),
         createdAt: Date.now(),
       };
       useLunaStore.getState().addMessage(convId, userMsg);
@@ -95,7 +124,10 @@ export function useChat() {
         .getState()
         .startConversationStream(convId, assistantId, "thinking");
 
-      const slash = text.startsWith("/") ? slashToParsedCommands(text) : null;
+      const slash =
+        text.startsWith("/") && !attachments?.length
+          ? slashToParsedCommands(text)
+          : null;
       let completedSuccessfully = false;
 
       try {
@@ -116,7 +148,39 @@ export function useChat() {
           return;
         }
 
-        let userContent = text;
+        let userContent = displayContent;
+
+        if (
+          imageAttachments.length > 0 &&
+          !useNativeVision &&
+          describeImagesForTextModels
+        ) {
+          const helper = resolveVisionHelperConfig(
+            llmConfig,
+            visionHelperConfig,
+          );
+          const messageImages = toMessageImages(attachments);
+          if (helper && messageImages?.length) {
+            try {
+              useLunaStore
+                .getState()
+                .setConversationStreamPhase(convId, "describing");
+              const described = await describeImagesForChat(
+                messageImages,
+                helper,
+              );
+              if (described) {
+                userContent = [displayContent, described]
+                  .filter(Boolean)
+                  .join("\n\n");
+              }
+            } catch (e) {
+              userContent = `${displayContent}\n\n[Could not describe image(s): ${(e as Error).message}. Add a vision-capable helper model in Settings → AI model.]`;
+            }
+          } else if (messageImages?.length) {
+            userContent = `${displayContent}\n\n[Images attached, but no vision helper is available for this endpoint. Use a vision-capable chat model or configure a vision helper in Settings.]`;
+          }
+        }
 
         if (searchAvailable) {
           try {
@@ -128,8 +192,8 @@ export function useChat() {
               : undefined;
 
             const decision = await decideWebSearch(
-              text,
-              (prompt) => completeText(prompt, deepseekKey),
+              displayContent,
+              (prompt) => completeText(prompt, llmConfig),
               recentContext,
             );
 
@@ -153,7 +217,7 @@ export function useChat() {
                 useLunaStore
                   .getState()
                   .setMessageSources(convId, assistantId, search.sources);
-                userContent = `[Web search results]\n${search.results}\n\n[User question]\n${text}`;
+                userContent = `[Web search results]\n${search.results}\n\n[User question]\n${displayContent}`;
               }
             }
           } catch {
@@ -188,7 +252,7 @@ export function useChat() {
         const full = await streamChat(
           history,
           systemPrompt,
-          deepseekKey,
+          llmConfig,
           abortController.signal,
           (token) => {
             if (!hasReceivedToken) {
@@ -209,6 +273,7 @@ export function useChat() {
                 (current?.content ?? "") + token,
               );
           },
+          visionParts ? { visionParts } : undefined,
         );
 
         const { cleaned, results } = await executeCommandsFromResponse(full);
@@ -219,7 +284,7 @@ export function useChat() {
           useLunaStore.getState().setActionResults(assistantId, results);
         }
 
-        const newMemories = extractMemories(text);
+        const newMemories = extractMemories(displayContent);
         if (newMemories.length) {
           useLunaStore.getState().addMemories(newMemories);
         }

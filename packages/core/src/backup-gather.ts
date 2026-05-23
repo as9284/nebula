@@ -1,7 +1,9 @@
+import type { LlmConfig } from "./llm-config";
 import type { NebulaBackup } from "./backup-schema";
 
 export interface BackupStoreSnapshot {
   settings: {
+    llmConfig?: LlmConfig;
     deepseekKey?: string;
     tavilyKey?: string;
     searchProvider?: "builtin" | "tavily";
@@ -21,6 +23,7 @@ export function gatherBackupDataFromSnapshot(
     settings: {
       ...(includeApiKeys
         ? {
+            llmConfig: snapshot.settings.llmConfig,
             deepseekKey: snapshot.settings.deepseekKey,
             tavilyKey: snapshot.settings.tavilyKey,
           }

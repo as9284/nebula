@@ -19,6 +19,7 @@ import { useState, useRef } from "react";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import type { SearchProvider } from "@/types/search";
 import { useLunaStore } from "@/stores/use-luna-store";
+import { ModelProviderSettings } from "@/components/chat/model-provider-settings";
 import { maskApiKey } from "@/lib/api-keys";
 import {
   exportNebulaBackup,
@@ -90,10 +91,8 @@ function SettingRow({
 }
 
 export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
-  const deepseekKey = useSettingsStore((s) => s.deepseekKey);
   const tavilyKey = useSettingsStore((s) => s.tavilyKey);
   const searchProvider = useSettingsStore((s) => s.searchProvider);
-  const setDeepseekKey = useSettingsStore((s) => s.setDeepseekKey);
   const setTavilyKey = useSettingsStore((s) => s.setTavilyKey);
   const setSearchProvider = useSettingsStore((s) => s.setSearchProvider);
   const theme = useSettingsStore((s) => s.theme);
@@ -104,7 +103,6 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const removeMemory = useLunaStore((s) => s.removeMemory);
   const addMemories = useLunaStore((s) => s.addMemories);
 
-  const [dsInput, setDsInput] = useState("");
   const [tvInput, setTvInput] = useState("");
   const [includeKeys, setIncludeKeys] = useState(false);
   const [status, setStatus] = useState("");
@@ -112,12 +110,10 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const memRef = useRef<HTMLInputElement>(null);
 
-  const saveKeys = () => {
-    if (dsInput.trim()) setDeepseekKey(dsInput.trim());
+  const saveTavilyKey = () => {
     if (tvInput.trim()) setTavilyKey(tvInput.trim());
-    setDsInput("");
     setTvInput("");
-    setStatus("Keys saved locally.");
+    setStatus("Tavily key saved locally.");
     setTimeout(() => setStatus(""), 3000);
   };
 
@@ -177,42 +173,40 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                 </div>
                 <div className="flex-1 min-h-0 overflow-y-auto overscroll-contain p-5 sm:p-6 sm:pt-5">
 
-                <Section icon={KeyRound} title="API Keys">
-                  <p className="text-xs text-text-muted">
-                    Model: deepseek-v4-pro · Tavily key only when using Tavily
-                    search
-                  </p>
+                <Section icon={KeyRound} title="AI model">
+                  <ModelProviderSettings />
+                </Section>
 
-                  {deepseekKey && (
-                    <p className="text-xs text-text-muted">
-                      DeepSeek: {maskApiKey(deepseekKey)}
-                    </p>
-                  )}
-                  <Input
-                    type="password"
-                    placeholder="DeepSeek API key"
-                    value={dsInput}
-                    onChange={(e) => setDsInput(e.target.value)}
-                  />
+                <div className="h-px bg-border mb-8" />
+
+                <Section icon={KeyRound} title="Web search (Tavily)">
+                  <p className="text-xs text-text-muted">
+                    Only needed when Luna&apos;s search provider is set to Tavily
+                    below.
+                  </p>
 
                   {tavilyKey && (
                     <p className="text-xs text-text-muted">
-                      Tavily: {maskApiKey(tavilyKey)}
+                      Saved: {maskApiKey(tavilyKey)}
                     </p>
                   )}
                   <Input
                     type="password"
-                    placeholder="Tavily API key"
+                    label="Tavily API key"
+                    helper="From tavily.com — used for enhanced web search, not chat."
+                    placeholder="tvly-…"
                     value={tvInput}
                     onChange={(e) => setTvInput(e.target.value)}
+                    autoComplete="off"
                   />
 
                   <button
                     type="button"
-                    onClick={saveKeys}
-                    className="px-5 py-2.5 rounded-xl bg-accent text-accent-fg text-sm font-medium hover:opacity-90 transition-opacity"
+                    onClick={saveTavilyKey}
+                    disabled={!tvInput.trim()}
+                    className="px-5 py-2.5 rounded-xl bg-accent text-accent-fg text-sm font-medium hover:opacity-90 transition-opacity disabled:opacity-40"
                   >
-                    Save keys
+                    Save Tavily key
                   </button>
                 </Section>
 

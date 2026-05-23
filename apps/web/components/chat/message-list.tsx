@@ -44,6 +44,7 @@ export function MessageList({
   const activeStreamPhase =
     isStreaming &&
     (streamPhase === "searching" ||
+      streamPhase === "describing" ||
       streamPhase === "thinking" ||
       streamPhase === "streaming")
       ? streamPhase

@@ -12,10 +12,12 @@ import { formatActionResultsForHistory } from "./action-result-history";
 import { buildSearchQuery } from "./search-query";
 import { buildSearchContext } from "./search-decision";
 import { isWebSearchAvailable } from "./search-provider";
-import { streamDeepSeek, completeDeepSeek, searchWebDirect } from "./stream-api";
+import type { LlmConfig } from "./llm-config";
+import { isLlmConfigured } from "./llm-config";
+import { streamChatModel, completeChatModel, searchWebDirect } from "./stream-api";
 
 export interface ChatControllerDeps {
-  getDeepseekKey: () => Promise<string>;
+  getLlmConfig: () => Promise<LlmConfig>;
   getTavilyKey: () => Promise<string>;
   getSearchProvider: () => SearchProvider;
   getLunaControls: () => LunaControls;
@@ -49,12 +51,12 @@ export async function runChatTurn(
   actionResults: ActionResult[];
   newMemories: string[];
 }> {
-  const deepseekKey = await deps.getDeepseekKey();
+  const llmConfig = await deps.getLlmConfig();
   const tavilyKey = await deps.getTavilyKey();
   const searchProvider = deps.getSearchProvider();
   const searchAvailable = isWebSearchAvailable(searchProvider, tavilyKey);
-  if (!deepseekKey.trim()) {
-    throw new Error("DeepSeek API key required");
+  if (!isLlmConfigured(llmConfig)) {
+    throw new Error("Model API key required. Add it in Settings.");
   }
 
   let userContent = input.text;
@@ -67,7 +69,7 @@ export async function runChatTurn(
       );
       const decision = await decideWebSearch(
         input.text,
-        (prompt) => completeDeepSeek(prompt, deepseekKey),
+        (prompt) => completeChatModel(prompt, llmConfig),
         recentContext,
       );
       if (decision.search) {
@@ -120,10 +122,10 @@ export async function runChatTurn(
   );
 
   let streaming = false;
-  const full = await streamDeepSeek(
+  const full = await streamChatModel(
     history,
     systemPrompt,
-    deepseekKey,
+    llmConfig,
     deps.signal,
     (token) => {
       if (!streaming) {

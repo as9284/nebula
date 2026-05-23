@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+const llmConfigSchema = z.object({
+  provider: z.enum(["openai", "anthropic"]),
+  apiKey: z.string(),
+  baseUrl: z.string(),
+  model: z.string(),
+});
+
 const lunaControlsSchema = z.object({
   decisionStyle: z.enum(["measured", "balanced", "decisive"]),
   personalityIntensity: z.enum(["subtle", "balanced", "sharp"]),
@@ -17,6 +24,7 @@ export const nebulaBackupSchema = z.object({
   app: z.literal("nebula"),
   data: z.object({
     settings: z.object({
+      llmConfig: llmConfigSchema.optional(),
       deepseekKey: z.string().optional(),
       tavilyKey: z.string().optional(),
       searchProvider: z.enum(["builtin", "tavily"]).optional(),

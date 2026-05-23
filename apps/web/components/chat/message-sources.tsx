@@ -43,6 +43,7 @@ export function MessageSources({ sources }: MessageSourcesProps) {
                 >
                   {source.index}
                 </span>
+                {/* eslint-disable-next-line @next/next/no-img-element -- external favicon */}
                 <img
                   src={`https://www.google.com/s2/favicons?domain=${encodeURIComponent(domain)}&sz=32`}
                   alt=""

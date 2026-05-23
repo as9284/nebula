@@ -28,7 +28,7 @@ In the Vercel project, set **Root Directory** to `apps/web`.
 ## Requirements
 
 - Node.js 20+
-- [DeepSeek API key](https://platform.deepseek.com)
+- An API key for your chosen provider (OpenAI, Anthropic, DeepSeek, Groq, Ollama, etc.) — configure in Settings
 - [Tavily API key](https://tavily.com) — optional, for Tavily search
 
 ## Cloud sync (optional)

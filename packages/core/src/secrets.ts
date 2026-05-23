@@ -1,7 +1,9 @@
+import type { LlmConfig } from "./llm-config";
+
 /** Platform-specific secret storage (browser settings on web). */
 export interface NebulaSecretsAdapter {
-  getDeepseekKey(): Promise<string>;
-  setDeepseekKey(value: string): Promise<void>;
+  getLlmConfig(): Promise<LlmConfig>;
+  setLlmConfig(value: LlmConfig): Promise<void>;
   getTavilyKey(): Promise<string>;
   setTavilyKey(value: string): Promise<void>;
   clearKeys?(): Promise<void>;

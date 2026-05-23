@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 
 const PHASE_LABELS = {
   searching: "Stop search",
+  describing: "Stop",
   thinking: "Stop thinking",
   streaming: "Stop",
   idle: "Stop",

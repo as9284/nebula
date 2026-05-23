@@ -2,6 +2,11 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
+import {
+  DEFAULT_LLM_CONFIG,
+  migrateDeepseekKey,
+  type LlmConfig,
+} from "@nebula/core/llm-config";
 import type { LunaControls } from "@/lib/luna-prompt";
 import type { SearchProvider } from "@/types/search";
 import { triggerCloudSync } from "@/lib/sync-trigger";
@@ -9,12 +14,18 @@ import { triggerCloudSync } from "@/lib/sync-trigger";
 export type ThemeMode = "dark" | "light";
 
 interface SettingsState {
-  deepseekKey: string;
+  llmConfig: LlmConfig;
+  /** When the chat model cannot see images, describe them with a vision helper first. */
+  describeImagesForTextModels: boolean;
+  /** Optional dedicated vision model; leave empty to auto-pick on your endpoint. */
+  visionHelperConfig: LlmConfig | null;
   tavilyKey: string;
   searchProvider: SearchProvider;
   theme: ThemeMode;
   lunaControls: LunaControls;
-  setDeepseekKey: (key: string) => void;
+  setLlmConfig: (config: LlmConfig) => void;
+  setDescribeImagesForTextModels: (enabled: boolean) => void;
+  setVisionHelperConfig: (config: LlmConfig | null) => void;
   setTavilyKey: (key: string) => void;
   setSearchProvider: (provider: SearchProvider) => void;
   setTheme: (theme: ThemeMode) => void;
@@ -35,12 +46,17 @@ const defaultControls: LunaControls = {
 export const useSettingsStore = create<SettingsState>()(
   persist(
     (set) => ({
-      deepseekKey: "",
+      llmConfig: { ...DEFAULT_LLM_CONFIG },
+      describeImagesForTextModels: true,
+      visionHelperConfig: null,
       tavilyKey: "",
       searchProvider: "builtin",
       theme: "dark",
       lunaControls: defaultControls,
-      setDeepseekKey: (deepseekKey) => set({ deepseekKey }),
+      setLlmConfig: (llmConfig) => set({ llmConfig }),
+      setDescribeImagesForTextModels: (describeImagesForTextModels) =>
+        set({ describeImagesForTextModels }),
+      setVisionHelperConfig: (visionHelperConfig) => set({ visionHelperConfig }),
       setTavilyKey: (tavilyKey) => set({ tavilyKey }),
       setSearchProvider: (searchProvider) => {
         set({ searchProvider });
@@ -60,13 +76,27 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "nebula-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 3,
+      version: 5,
       migrate: (persisted) => {
-        const state = persisted as SettingsState & { webSearchEnabled?: boolean };
-        const { webSearchEnabled: _legacyWebSearch, ...rest } = state;
+        const state = persisted as SettingsState & {
+          webSearchEnabled?: boolean;
+          deepseekKey?: string;
+        };
+        const { webSearchEnabled: _legacyWebSearch, deepseekKey, ...rest } =
+          state;
         void _legacyWebSearch;
+
+        const llmConfig =
+          state.llmConfig?.apiKey?.trim()
+            ? state.llmConfig
+            : migrateDeepseekKey(deepseekKey);
+
         return {
           ...rest,
+          llmConfig,
+          describeImagesForTextModels:
+            state.describeImagesForTextModels ?? true,
+          visionHelperConfig: state.visionHelperConfig ?? null,
           searchProvider: state.searchProvider ?? "builtin",
           theme: state.theme ?? "dark",
         };

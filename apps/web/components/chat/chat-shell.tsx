@@ -80,7 +80,7 @@ export function ChatShell() {
       </div>
 
       <ChatComposer
-        onSend={(t) => void sendMessage(t)}
+        onSend={(t, attachments) => void sendMessage(t, attachments)}
         onStop={stop}
         onOpenSettings={() => setSettingsOpen(true)}
       />

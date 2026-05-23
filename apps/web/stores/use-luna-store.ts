@@ -9,7 +9,12 @@ import { abortConversationStream } from "@/lib/chat-stream-registry";
 import { flushCloudSync } from "@/lib/cloud-sync";
 import { triggerCloudSync } from "@/lib/sync-trigger";
 
-export type StreamPhase = "idle" | "searching" | "thinking" | "streaming";
+export type StreamPhase =
+  | "idle"
+  | "searching"
+  | "describing"
+  | "thinking"
+  | "streaming";
 
 export type ActiveStreamPhase = Exclude<StreamPhase, "idle">;
 

@@ -5,12 +5,13 @@ import { MessageActions } from "./message-actions";
 import { ActionResults } from "@/components/cards/action-result";
 import { ThinkingIndicator } from "./thinking-indicator";
 import { LunaMarkdown } from "./luna-markdown";
+import { UserMessageContent } from "./user-message-content";
 import { MessageSources } from "./message-sources";
 import { useLunaStore } from "@/stores/use-luna-store";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
-type ActiveStreamPhase = "searching" | "thinking" | "streaming";
+type ActiveStreamPhase = "searching" | "describing" | "thinking" | "streaming";
 
 interface ChatMessageProps {
   message: ChatMessageType;
@@ -24,7 +25,13 @@ interface ChatMessageProps {
 function toIndicatorPhase(
   phase: ActiveStreamPhase | undefined,
 ): ActiveStreamPhase {
-  if (phase === "searching" || phase === "streaming") return phase;
+  if (
+    phase === "searching" ||
+    phase === "describing" ||
+    phase === "streaming"
+  ) {
+    return phase;
+  }
   return "thinking";
 }
 
@@ -75,9 +82,10 @@ export function ChatMessage({
             )}
           >
             {isUser ? (
-              <p className="text-[0.9375rem] leading-snug whitespace-pre-wrap text-text-primary">
-                {message.content}
-              </p>
+              <UserMessageContent
+                content={message.content}
+                images={message.images}
+              />
             ) : (
               <div
                 className={cn("luna-prose", showCursor && "typing-cursor")}

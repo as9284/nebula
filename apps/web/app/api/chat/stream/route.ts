@@ -1,50 +1,65 @@
-import { DEEPSEEK_API_URL, DEEPSEEK_MODEL } from "@/lib/deepseek";
+import { streamLlm, type LlmMessage } from "@nebula/core/llm";
+import {
+  type LlmConfig,
+  isLlmConfigured,
+} from "@nebula/core/llm-config";
 
 export async function POST(req: Request) {
-  const apiKey = req.headers.get("x-deepseek-key");
-  if (!apiKey) {
+  const body = (await req.json()) as {
+    messages: { role: string; content: LlmMessage["content"] }[];
+    systemPrompt?: string;
+    llm?: LlmConfig;
+  };
+
+  const llm = body.llm;
+  if (!llm || !isLlmConfigured(llm)) {
     return Response.json(
-      { error: "DeepSeek API key required. Add it in Settings." },
+      { error: "Model not configured. Add your API key in Settings." },
       { status: 401 },
     );
   }
 
-  const body = (await req.json()) as {
-    messages: { role: string; content: string }[];
-    systemPrompt?: string;
-  };
+  const chatMessages: LlmMessage[] = body.messages.map((m) => ({
+    role: m.role as LlmMessage["role"],
+    content: m.content,
+  }));
 
-  const messages = body.systemPrompt
-    ? [{ role: "system", content: body.systemPrompt }, ...body.messages]
-    : body.messages;
+  const messages: LlmMessage[] = body.systemPrompt
+    ? [{ role: "system", content: body.systemPrompt }, ...chatMessages]
+    : chatMessages;
 
-  const upstream = await fetch(DEEPSEEK_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      messages,
-      stream: true,
-    }),
-    cache: "no-store",
-  });
+  try {
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        try {
+          await streamLlm(
+            llm,
+            messages,
+            req.signal,
+            (token) => {
+              const chunk = `data: ${JSON.stringify({
+                choices: [{ delta: { content: token } }],
+              })}\n\n`;
+              controller.enqueue(encoder.encode(chunk));
+            },
+          );
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
+        } catch (e) {
+          controller.error(e);
+        }
+      },
+    });
 
-  if (!upstream.ok) {
-    const text = await upstream.text();
-    return Response.json(
-      { error: text || `DeepSeek error ${upstream.status}` },
-      { status: upstream.status },
-    );
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/event-stream",
+        "Cache-Control": "no-cache",
+        Connection: "keep-alive",
+      },
+    });
+  } catch (e) {
+    return Response.json({ error: String(e) }, { status: 500 });
   }
-
-  return new Response(upstream.body, {
-    headers: {
-      "Content-Type": "text/event-stream",
-      "Cache-Control": "no-cache",
-      Connection: "keep-alive",
-    },
-  });
 }

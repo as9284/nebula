@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { User, Cloud, CloudOff, Loader2 } from "lucide-react";
 import { useAuth } from "@/components/auth/auth-provider";
@@ -32,6 +32,15 @@ const AUTH_ERROR_MESSAGES: Record<string, string> = {
   config: "Cloud auth is not configured on this deployment.",
 };
 
+function authErrorFromParams(params: URLSearchParams): string {
+  if (params.get("auth") !== "error") return "";
+  const reason = params.get("auth_reason") ?? "";
+  return (
+    AUTH_ERROR_MESSAGES[reason] ??
+    "Sign-in failed. Request a new magic link and open it in the same browser."
+  );
+}
+
 export function AccountSection() {
   const searchParams = useSearchParams();
   const { user, loading, configured, signOut } = useAuth();
@@ -45,19 +54,20 @@ export function AccountSection() {
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState("");
+  const urlAuthError = useMemo(
+    () => authErrorFromParams(searchParams),
+    [searchParams],
+  );
 
   useEffect(() => {
-    if (searchParams.get("auth") !== "error") return;
-    const reason = searchParams.get("auth_reason") ?? "";
-    setStatus(
-      AUTH_ERROR_MESSAGES[reason] ??
-        "Sign-in failed. Request a new magic link and open it in the same browser.",
-    );
+    if (!urlAuthError) return;
     const url = new URL(window.location.href);
     url.searchParams.delete("auth");
     url.searchParams.delete("auth_reason");
     window.history.replaceState({}, "", url.pathname + url.search + url.hash);
-  }, [searchParams]);
+  }, [urlAuthError]);
+
+  const displayStatus = status || urlAuthError;
 
   const sendMagicLink = useCallback(async () => {
     const trimmed = email.trim();
@@ -201,9 +211,9 @@ export function AccountSection() {
         </div>
       )}
 
-      {status && (
+      {displayStatus && (
         <p className="mt-3 text-xs text-text-secondary bg-bg rounded-xl px-3 py-2 border border-border">
-          {status}
+          {displayStatus}
         </p>
       )}
     </div>

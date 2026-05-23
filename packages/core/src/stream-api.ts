@@ -1,4 +1,6 @@
-import { DEEPSEEK_API_URL, DEEPSEEK_MODEL } from "./deepseek";
+import type { LlmConfig } from "./llm-config";
+import { migrateDeepseekKey } from "./llm-config";
+import { completeLlm, streamLlm, type LlmMessage } from "./llm";
 import type { SearchProvider, WebSearchResponse } from "./types/search";
 import type { SearchTopic } from "./search-query";
 import { searchWithBuiltin } from "./search-fallback";
@@ -10,96 +12,53 @@ export interface StreamMessage {
   content: string;
 }
 
-export async function streamDeepSeek(
+export async function streamChatModel(
   messages: StreamMessage[],
   systemPrompt: string,
-  deepseekKey: string,
+  config: LlmConfig,
   signal: AbortSignal,
   onToken: (token: string) => void,
 ): Promise<string> {
-  const res = await fetch(DEEPSEEK_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${deepseekKey}`,
-    },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      messages: [{ role: "system", content: systemPrompt }, ...messages],
-      stream: true,
-    }),
-    signal,
-  });
-
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
-    throw new Error(err.error?.message ?? `DeepSeek request failed (${res.status})`);
-  }
-
-  const reader = res.body?.getReader();
-  if (!reader) throw new Error("No response body");
-
-  const decoder = new TextDecoder();
-  let full = "";
-  let buffer = "";
-
-  while (true) {
-    const { done, value } = await reader.read();
-    if (done) break;
-
-    buffer += decoder.decode(value, { stream: true });
-    const lines = buffer.split("\n");
-    buffer = lines.pop() ?? "";
-
-    for (const line of lines) {
-      const trimmed = line.trim();
-      if (!trimmed.startsWith("data:")) continue;
-      const data = trimmed.slice(5).trim();
-      if (data === "[DONE]") continue;
-      try {
-        const parsed = JSON.parse(data) as {
-          choices?: { delta?: { content?: string } }[];
-        };
-        const token = parsed.choices?.[0]?.delta?.content ?? "";
-        if (token) {
-          full += token;
-          onToken(token);
-        }
-      } catch {
-        // skip malformed SSE chunks
-      }
-    }
-  }
-
-  return full;
+  const llmMessages: LlmMessage[] = [
+    { role: "system", content: systemPrompt },
+    ...messages.map((m) => ({
+      role: m.role,
+      content: m.content,
+    })),
+  ];
+  return streamLlm(config, llmMessages, signal, onToken);
 }
 
+export async function completeChatModel(
+  prompt: string,
+  config: LlmConfig,
+): Promise<string> {
+  return completeLlm(config, prompt);
+}
+
+/** @deprecated Use streamChatModel */
+export async function streamDeepSeek(
+  messages: StreamMessage[],
+  systemPrompt: string,
+  apiKey: string,
+  signal: AbortSignal,
+  onToken: (token: string) => void,
+): Promise<string> {
+  return streamChatModel(
+    messages,
+    systemPrompt,
+    migrateDeepseekKey(apiKey),
+    signal,
+    onToken,
+  );
+}
+
+/** @deprecated Use completeChatModel */
 export async function completeDeepSeek(
   prompt: string,
-  deepseekKey: string,
+  apiKey: string,
 ): Promise<string> {
-  const res = await fetch(DEEPSEEK_API_URL, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${deepseekKey}`,
-    },
-    body: JSON.stringify({
-      model: DEEPSEEK_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      stream: false,
-    }),
-  });
-
-  if (!res.ok) {
-    const err = (await res.json().catch(() => ({}))) as { error?: { message?: string } };
-    throw new Error(err.error?.message ?? `DeepSeek request failed (${res.status})`);
-  }
-
-  const data = (await res.json()) as {
-    choices?: { message?: { content?: string } }[];
-  };
-  return data.choices?.[0]?.message?.content ?? "";
+  return completeChatModel(prompt, migrateDeepseekKey(apiKey));
 }
 
 export async function searchWebDirect(
