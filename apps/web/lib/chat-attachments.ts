@@ -87,7 +87,36 @@ export function normalizePastedFile(file: File, index = 0): File {
 }
 
 function fileDedupeKey(file: File): string {
+  if (isImage(file)) {
+    return `img\0${file.size}\0${file.type}`;
+  }
   return `${file.name}\0${file.size}\0${file.type}\0${file.lastModified}`;
+}
+
+function collectFilesFromItems(items: DataTransferItemList | undefined): File[] {
+  if (!items?.length) return [];
+  const out: File[] = [];
+  for (const item of Array.from(items)) {
+    if (item.kind !== "file") continue;
+    const file = item.getAsFile();
+    if (file) out.push(normalizePastedFile(file, out.length));
+  }
+  return out;
+}
+
+function collectFilesFromFileList(files: FileList | undefined): File[] {
+  if (!files?.length) return [];
+  return Array.from(files).map((file, index) =>
+    normalizePastedFile(file, index),
+  );
+}
+
+/** Clipboard paste: one image max (most recent), no duplicate sources. */
+function limitPasteToMostRecentImage(files: File[]): File[] {
+  const images = files.filter(isImage);
+  const other = files.filter((f) => !isImage(f));
+  if (images.length <= 1) return files;
+  return [...other, images[images.length - 1]!];
 }
 
 export function dedupeFiles(files: File[]): File[] {
@@ -174,39 +203,61 @@ function filesFromHtml(html: string): File[] {
   }
 }
 
-/** Collect attachable files from paste, drop, or clipboard DataTransfer. */
-export function dataTransferToFiles(data: DataTransfer | null): File[] {
+/**
+ * Files from a clipboard paste. Uses one source (items → files → html) to avoid
+ * duplicates, and keeps only the most recent image when several are present.
+ */
+export function clipboardPasteToFiles(data: DataTransfer | null): File[] {
   if (!data) return [];
 
-  const collected: File[] = [];
-
-  if (data.items?.length) {
-    for (const item of Array.from(data.items)) {
-      if (item.kind !== "file") continue;
-      const file = item.getAsFile();
-      if (file) collected.push(normalizePastedFile(file, collected.length));
-    }
+  const fromItems = collectFilesFromItems(data.items);
+  if (fromItems.length > 0) {
+    return limitPasteToMostRecentImage(dedupeFiles(fromItems));
   }
 
-  if (data.files?.length) {
-    for (const file of Array.from(data.files)) {
-      collected.push(normalizePastedFile(file, collected.length));
-    }
+  const fromFiles = collectFilesFromFileList(data.files);
+  if (fromFiles.length > 0) {
+    return limitPasteToMostRecentImage(dedupeFiles(fromFiles));
   }
 
   const html = data.getData("text/html");
   if (html) {
-    collected.push(...filesFromHtml(html));
+    const fromHtml = filesFromHtml(html);
+    if (fromHtml.length) {
+      return limitPasteToMostRecentImage(dedupeFiles(fromHtml));
+    }
   }
 
-  return dedupeFiles(collected);
+  return [];
+}
+
+/** Collect attachable files from drop or generic DataTransfer (multi-file OK). */
+export function dataTransferToFiles(data: DataTransfer | null): File[] {
+  if (!data) return [];
+
+  const fromItems = collectFilesFromItems(data.items);
+  if (fromItems.length > 0) {
+    return dedupeFiles(fromItems);
+  }
+
+  const fromFiles = collectFilesFromFileList(data.files);
+  if (fromFiles.length > 0) {
+    return dedupeFiles(fromFiles);
+  }
+
+  const html = data.getData("text/html");
+  if (html) {
+    return dedupeFiles(filesFromHtml(html));
+  }
+
+  return [];
 }
 
 /** Whether to call preventDefault on paste (pure file/image paste, no text). */
 export function shouldPreventDefaultOnPaste(
   data: DataTransfer | null,
 ): boolean {
-  if (!data || !dataTransferToFiles(data).length) return false;
+  if (!data || !clipboardPasteToFiles(data).length) return false;
   const plain = data.getData("text/plain")?.trim() ?? "";
   return plain.length === 0;
 }

@@ -8,6 +8,7 @@ import { isConversationStreaming } from "@/lib/luna-stream-selectors";
 import { useSettingsStore } from "@/stores/use-settings-store";
 import { isLlmConfigured } from "@nebula/core/llm-config";
 import {
+  clipboardPasteToFiles,
   dataTransferToFiles,
   filesToAttachments,
   mergeAttachmentErrors,
@@ -91,7 +92,7 @@ export function ChatComposer({
   const handlePaste = (e: React.ClipboardEvent<HTMLTextAreaElement>) => {
     if (isStreaming) return;
     const { clipboardData } = e;
-    const files = dataTransferToFiles(clipboardData);
+    const files = clipboardPasteToFiles(clipboardData);
     if (!files.length) return;
 
     void appendFiles(files);
