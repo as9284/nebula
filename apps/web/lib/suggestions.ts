@@ -7,25 +7,17 @@ interface Suggestion {
   weight: number;
 }
 
-function getTimeContext(): { hour: number; greeting: string; isMorning: boolean; isEvening: boolean } {
+function getTimeContext(): {
+  isMorning: boolean;
+  isAfternoon: boolean;
+  isEvening: boolean;
+} {
   const hour = new Date().getHours();
-  let greeting = "Hello";
-  if (hour < 12) greeting = "Good morning";
-  else if (hour < 18) greeting = "Good afternoon";
-  else greeting = "Good evening";
-  return { hour, greeting, isMorning: hour < 12, isEvening: hour >= 18 };
-}
-
-function getNameFromMemories(memories: { text: string }[]): string | null {
-  const nameMem = memories.find((m) =>
-    m.text.toLowerCase().startsWith("user's name is") ||
-    m.text.toLowerCase().startsWith("user goes by") ||
-    m.text.toLowerCase().startsWith("my name is") ||
-    m.text.toLowerCase().startsWith("call me"),
-  );
-  if (!nameMem) return null;
-  const match = nameMem.text.match(/(?:name is|goes by|call me)\s+(.+)/i);
-  return match?.[1].trim() ?? null;
+  return {
+    isMorning: hour < 12,
+    isAfternoon: hour >= 12 && hour < 18,
+    isEvening: hour >= 18,
+  };
 }
 
 function getLocationFromMemories(memories: { text: string }[]): string | null {
@@ -85,21 +77,22 @@ export function generateSuggestions(): string[] {
   const { memories, conversations } = useLunaStore.getState();
   const { tasks } = useOrbitStore.getState();
   const { selectedLocation } = useSolarisStore.getState();
-  const { greeting, isMorning, isEvening } = getTimeContext();
+  const { isMorning, isAfternoon, isEvening } = getTimeContext();
 
   const candidates: Suggestion[] = [];
-  const name = getNameFromMemories(memories);
   const location = getLocationFromMemories(memories) || selectedLocation?.name;
   const work = getWorkFromMemories(memories);
   const preferences = getPreferencesFromMemories(memories);
   const recentTopics = getRecentTopics(conversations);
   const pendingTasks = tasks.filter((t) => !t.completed);
 
-  // Time-based personal greeting
-  if (name) {
-    candidates.push({ text: `${greeting}, ${name}`, weight: 10 });
-  } else {
-    candidates.push({ text: `${greeting}`, weight: 5 });
+  // Time-of-day prompts to send Luna (not self-greetings)
+  if (isMorning) {
+    candidates.push({ text: "What should I focus on today?", weight: 7 });
+  } else if (isAfternoon) {
+    candidates.push({ text: "What should I tackle next?", weight: 6 });
+  } else if (isEvening) {
+    candidates.push({ text: "Help me wrap up my day", weight: 6 });
   }
 
   // Weather based on location
