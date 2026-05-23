@@ -10,9 +10,19 @@ export interface StreamMessage {
   content: StreamMessageContent;
 }
 
+export interface StreamChatResult {
+  content: string;
+  thinking: string;
+}
+
 export interface StreamChatOptions {
   /** Vision parts for the latest user turn (OpenAI / Anthropic). */
   visionParts?: LlmContentPart[];
+}
+
+export interface StreamChatHandlers {
+  onContent?: (token: string) => void;
+  onReasoning?: (token: string) => void;
 }
 
 export async function streamChat(
@@ -20,9 +30,9 @@ export async function streamChat(
   systemPrompt: string,
   llm: LlmConfig,
   signal: AbortSignal,
-  onToken: (token: string) => void,
+  handlers: StreamChatHandlers,
   options?: StreamChatOptions,
-): Promise<string> {
+): Promise<StreamChatResult> {
   const payloadMessages = options?.visionParts?.length
     ? withVisionOnLastUser(messages, options.visionParts)
     : messages;
@@ -47,7 +57,8 @@ export async function streamChat(
   if (!reader) throw new Error("No response body");
 
   const decoder = new TextDecoder();
-  let full = "";
+  let content = "";
+  let thinking = "";
   let buffer = "";
 
   while (true) {
@@ -65,12 +76,20 @@ export async function streamChat(
       if (data === "[DONE]") continue;
       try {
         const parsed = JSON.parse(data) as {
-          choices?: { delta?: { content?: string } }[];
+          choices?: {
+            delta?: { content?: string; reasoning?: string };
+          }[];
         };
-        const token = parsed.choices?.[0]?.delta?.content ?? "";
-        if (token) {
-          full += token;
-          onToken(token);
+        const delta = parsed.choices?.[0]?.delta;
+        if (!delta) continue;
+
+        if (delta.content) {
+          content += delta.content;
+          handlers.onContent?.(delta.content);
+        }
+        if (delta.reasoning) {
+          thinking += delta.reasoning;
+          handlers.onReasoning?.(delta.reasoning);
         }
       } catch {
         // skip malformed SSE chunks
@@ -78,7 +97,7 @@ export async function streamChat(
     }
   }
 
-  return full;
+  return { content, thinking };
 }
 
 function withVisionOnLastUser(

@@ -7,6 +7,7 @@ export * from "./llm";
 export * from "./image-content-parts";
 export * from "./vision-support";
 export * from "./describe-images";
+export * from "./reasoning-stream";
 export * from "./stream-api";
 export * from "./search-query";
 export * from "./search-provider";

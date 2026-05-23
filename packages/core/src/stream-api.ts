@@ -26,7 +26,10 @@ export async function streamChatModel(
       content: m.content,
     })),
   ];
-  return streamLlm(config, llmMessages, signal, onToken);
+  const result = await streamLlm(config, llmMessages, signal, {
+    onContent: onToken,
+  });
+  return result.content;
 }
 
 export async function completeChatModel(

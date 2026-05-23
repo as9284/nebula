@@ -14,6 +14,8 @@ export interface ChatMessage {
   id: string;
   role: MessageRole;
   content: string;
+  /** Model reasoning / chain-of-thought (shown separately from the reply). */
+  thinking?: string;
   createdAt: number;
   sources?: SearchSource[];
   images?: MessageImage[];

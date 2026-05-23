@@ -32,18 +32,21 @@ export async function POST(req: Request) {
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       async start(controller) {
-        try {
-          await streamLlm(
-            llm,
-            messages,
-            req.signal,
-            (token) => {
-              const chunk = `data: ${JSON.stringify({
-                choices: [{ delta: { content: token } }],
-              })}\n\n`;
-              controller.enqueue(encoder.encode(chunk));
-            },
+        const enqueue = (payload: Record<string, unknown>) => {
+          controller.enqueue(
+            encoder.encode(
+              `data: ${JSON.stringify({
+                choices: [{ delta: payload }],
+              })}\n\n`,
+            ),
           );
+        };
+
+        try {
+          await streamLlm(llm, messages, req.signal, {
+            onContent: (text) => enqueue({ content: text }),
+            onReasoning: (text) => enqueue({ reasoning: text }),
+          });
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (e) {

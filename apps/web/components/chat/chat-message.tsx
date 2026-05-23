@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { MessageActions } from "./message-actions";
 import { ActionResults } from "@/components/cards/action-result";
 import { ThinkingIndicator } from "./thinking-indicator";
+import { ReasoningPanel } from "./reasoning-panel";
 import { LunaMarkdown } from "./luna-markdown";
 import { UserMessageContent } from "./user-message-content";
 import { MessageSources } from "./message-sources";
@@ -46,10 +47,16 @@ export function ChatMessage({
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
   const sources = message.sources;
   const isUser = message.role === "user";
+  const hasThinking = !!message.thinking?.trim();
+  const hasContent = message.content.trim().length > 0;
   const showCursor =
-    !isUser && isStreaming && isLastAssistant && message.content.length > 0;
-  const showThinking =
-    !isUser && isStreaming && isLastAssistant && !message.content;
+    !isUser && isStreaming && isLastAssistant && hasContent;
+  const showPhaseIndicator =
+    !isUser &&
+    isStreaming &&
+    isLastAssistant &&
+    !hasContent &&
+    !hasThinking;
 
   return (
     <motion.div
@@ -90,9 +97,17 @@ export function ChatMessage({
               <div
                 className={cn("luna-prose", showCursor && "typing-cursor")}
               >
-                {message.content ? (
+                {hasThinking && (
+                  <ReasoningPanel
+                    thinking={message.thinking ?? ""}
+                    isStreaming={
+                      isStreaming && isLastAssistant && !hasContent
+                    }
+                  />
+                )}
+                {hasContent ? (
                   <LunaMarkdown content={message.content} sources={sources} />
-                ) : showThinking ? (
+                ) : showPhaseIndicator ? (
                   <ThinkingIndicator
                     key={activeStreamPhase ?? "thinking"}
                     phase={toIndicatorPhase(activeStreamPhase)}

@@ -51,6 +51,16 @@ interface LunaState {
     messageId: string,
     content: string,
   ) => void;
+  appendMessageStream: (
+    conversationId: string,
+    messageId: string,
+    delta: { content?: string; thinking?: string },
+  ) => void;
+  setMessageThinking: (
+    conversationId: string,
+    messageId: string,
+    thinking: string,
+  ) => void;
   truncateFromMessage: (conversationId: string, messageId: string) => void;
   setActionResults: (
     messageId: string,
@@ -182,6 +192,45 @@ export const useLunaStore = create<LunaState>()(
                   ...c,
                   messages: c.messages.map((m) =>
                     m.id === messageId ? { ...m, content } : m,
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        })),
+      appendMessageStream: (conversationId, messageId, delta) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) => {
+                    if (m.id !== messageId) return m;
+                    return {
+                      ...m,
+                      ...(delta.content !== undefined
+                        ? { content: m.content + delta.content }
+                        : {}),
+                      ...(delta.thinking !== undefined
+                        ? {
+                            thinking: (m.thinking ?? "") + delta.thinking,
+                          }
+                        : {}),
+                    };
+                  }),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        })),
+      setMessageThinking: (conversationId, messageId, thinking) =>
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === messageId ? { ...m, thinking } : m,
                   ),
                   updatedAt: Date.now(),
                 }

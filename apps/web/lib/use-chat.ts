@@ -248,38 +248,44 @@ export function useChat() {
 
         const abortController = new AbortController();
         setStreamAbortController(convId, abortController);
-        let hasReceivedToken = false;
-        const full = await streamChat(
+        let hasReceivedContent = false;
+        const streamed = await streamChat(
           history,
           systemPrompt,
           llmConfig,
           abortController.signal,
-          (token) => {
-            if (!hasReceivedToken) {
-              hasReceivedToken = true;
+          {
+            onContent: (token) => {
+              if (!hasReceivedContent) {
+                hasReceivedContent = true;
+                useLunaStore
+                  .getState()
+                  .setConversationStreamPhase(convId, "streaming");
+              }
               useLunaStore
                 .getState()
-                .setConversationStreamPhase(convId, "streaming");
-            }
-            const current = useLunaStore
-              .getState()
-              .conversations.find((c) => c.id === convId)
-              ?.messages.find((m) => m.id === assistantId);
-            useLunaStore
-              .getState()
-              .updateMessageContent(
-                convId,
-                assistantId,
-                (current?.content ?? "") + token,
-              );
+                .appendMessageStream(convId, assistantId, { content: token });
+            },
+            onReasoning: (token) => {
+              useLunaStore
+                .getState()
+                .appendMessageStream(convId, assistantId, { thinking: token });
+            },
           },
           visionParts ? { visionParts } : undefined,
         );
 
-        const { cleaned, results } = await executeCommandsFromResponse(full);
+        const { cleaned, results } = await executeCommandsFromResponse(
+          streamed.content,
+        );
         useLunaStore
           .getState()
-          .updateMessageContent(convId, assistantId, cleaned || full);
+          .updateMessageContent(convId, assistantId, cleaned || streamed.content);
+        if (streamed.thinking) {
+          useLunaStore
+            .getState()
+            .setMessageThinking(convId, assistantId, streamed.thinking);
+        }
         if (results.length) {
           useLunaStore.getState().setActionResults(assistantId, results);
         }

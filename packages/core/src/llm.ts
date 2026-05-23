@@ -2,6 +2,16 @@ import {
   type LlmConfig,
   normalizeOpenAiCompletionsUrl,
 } from "./llm-config";
+import {
+  type LlmStreamHandlers,
+  type LlmStreamResult,
+  ThinkTagStreamSplitter,
+  emitStreamDelta,
+  mergeThinking,
+  parseOpenAiStreamDelta,
+  shouldUseReasoningSplit,
+  splitEmbeddedThinking,
+} from "./reasoning-stream";
 
 export interface LlmMessage {
   role: "user" | "assistant" | "system";
@@ -89,16 +99,18 @@ async function* readSseLines(
   if (buffer.trim()) yield buffer;
 }
 
+export type { LlmStreamHandlers, LlmStreamResult } from "./reasoning-stream";
+
 export async function streamLlm(
   config: LlmConfig,
   messages: LlmMessage[],
   signal: AbortSignal,
-  onToken: (token: string) => void,
-): Promise<string> {
+  handlers: LlmStreamHandlers,
+): Promise<LlmStreamResult> {
   if (config.provider === "anthropic") {
-    return streamAnthropic(config, messages, signal, onToken);
+    return streamAnthropic(config, messages, signal, handlers);
   }
-  return streamOpenAiCompatible(config, messages, signal, onToken);
+  return streamOpenAiCompatible(config, messages, signal, handlers);
 }
 
 export async function completeLlm(
@@ -122,20 +134,25 @@ async function streamOpenAiCompatible(
   config: LlmConfig,
   messages: LlmMessage[],
   signal: AbortSignal,
-  onToken: (token: string) => void,
-): Promise<string> {
+  handlers: LlmStreamHandlers,
+): Promise<LlmStreamResult> {
   const url = normalizeOpenAiCompletionsUrl(config.baseUrl);
+  const body: Record<string, unknown> = {
+    model: config.model,
+    messages,
+    stream: true,
+  };
+  if (shouldUseReasoningSplit(config)) {
+    body.reasoning_split = true;
+  }
+
   const res = await fetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
       Authorization: `Bearer ${config.apiKey}`,
     },
-    body: JSON.stringify({
-      model: config.model,
-      messages,
-      stream: true,
-    }),
+    body: JSON.stringify(body),
     signal,
   });
 
@@ -149,27 +166,54 @@ async function streamOpenAiCompatible(
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");
 
-  let full = "";
+  let content = "";
+  let thinking = "";
+  const tagSplitter = new ThinkTagStreamSplitter();
+
   for await (const line of readSseLines(reader)) {
     const trimmed = line.trim();
     if (!trimmed.startsWith("data:")) continue;
     const data = trimmed.slice(5).trim();
     if (data === "[DONE]") continue;
     try {
-      const parsed = JSON.parse(data) as {
-        choices?: { delta?: { content?: string } }[];
-      };
-      const token = parsed.choices?.[0]?.delta?.content ?? "";
-      if (token) {
-        full += token;
-        onToken(token);
+      const parsed = JSON.parse(data);
+      const delta = parseOpenAiStreamDelta(parsed);
+
+      if (delta.content) {
+        const split = tagSplitter.push(delta.content);
+        if (split.content) {
+          content += split.content;
+        }
+        if (split.reasoning) {
+          thinking += split.reasoning;
+        }
+        emitStreamDelta(split, handlers);
+      }
+
+      if (delta.reasoning) {
+        thinking += delta.reasoning;
+        handlers.onReasoning?.(delta.reasoning);
       }
     } catch {
       // skip malformed SSE chunks
     }
   }
 
-  return full;
+  const tail = tagSplitter.flush();
+  if (tail.content) {
+    content += tail.content;
+    handlers.onContent?.(tail.content);
+  }
+  if (tail.reasoning) {
+    thinking += tail.reasoning;
+    handlers.onReasoning?.(tail.reasoning);
+  }
+
+  const embedded = splitEmbeddedThinking(content);
+  return {
+    content: embedded.content,
+    thinking: mergeThinking(thinking, embedded.thinking),
+  };
 }
 
 async function completeOpenAiCompatibleMessages(
@@ -207,8 +251,8 @@ async function streamAnthropic(
   config: LlmConfig,
   messages: LlmMessage[],
   signal: AbortSignal,
-  onToken: (token: string) => void,
-): Promise<string> {
+  handlers: LlmStreamHandlers,
+): Promise<LlmStreamResult> {
   const { system, messages: anthropicMessages } = toAnthropicMessages(messages);
   const res = await fetch(anthropicUrl(config), {
     method: "POST",
@@ -237,7 +281,8 @@ async function streamAnthropic(
   const reader = res.body?.getReader();
   if (!reader) throw new Error("No response body");
 
-  let full = "";
+  let content = "";
+  let thinking = "";
   let eventType = "";
 
   for await (const line of readSseLines(reader)) {
@@ -252,23 +297,33 @@ async function streamAnthropic(
     try {
       const parsed = JSON.parse(data) as {
         type?: string;
-        delta?: { type?: string; text?: string };
+        delta?: { type?: string; text?: string; thinking?: string };
       };
       const type = parsed.type ?? eventType;
-      if (
-        type === "content_block_delta" &&
-        parsed.delta?.type === "text_delta" &&
-        parsed.delta.text
-      ) {
-        full += parsed.delta.text;
-        onToken(parsed.delta.text);
+      if (type === "content_block_delta" && parsed.delta) {
+        if (parsed.delta.type === "text_delta" && parsed.delta.text) {
+          content += parsed.delta.text;
+          handlers.onContent?.(parsed.delta.text);
+        }
+        if (parsed.delta.type === "thinking_delta") {
+          const piece =
+            parsed.delta.thinking ?? parsed.delta.text ?? "";
+          if (piece) {
+            thinking += piece;
+            handlers.onReasoning?.(piece);
+          }
+        }
       }
     } catch {
       // skip malformed SSE chunks
     }
   }
 
-  return full;
+  const embedded = splitEmbeddedThinking(content);
+  return {
+    content: embedded.content,
+    thinking: mergeThinking(thinking, embedded.thinking),
+  };
 }
 
 async function completeAnthropicMessages(
