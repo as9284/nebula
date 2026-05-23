@@ -30,6 +30,7 @@ const KNOWN_NON_VISION_MODEL = [
   /^mistral-/i,
   /^mixtral/i,
   /^deepseek-reasoner/i,
+  /^minimax-m2/i,
   /^o1(-mini|-preview)?$/i,
   /^o3(-mini)?$/i,
   /^command-r(?!-vision)/i,
@@ -72,9 +73,13 @@ export function suggestVisionModel(config: LlmConfig): string | null {
   if (host.includes("deepseek.com") || url.includes("deepseek")) {
     return "deepseek-chat";
   }
-  if (host.includes("groq.com") || url.includes("groq")) {
-    return "llama-3.2-90b-vision-preview";
+  if (host.includes("minimax.io") || url.includes("minimax")) {
+    return null;
   }
+  if (host.includes("generativelanguage.googleapis.com")) {
+    return "gemini-2.5-flash";
+  }
+  if (host.includes("mistral.ai")) return "pixtral-12b-2409";
   if (
     host.includes("localhost") ||
     host.includes("127.0.0.1") ||
@@ -83,7 +88,6 @@ export function suggestVisionModel(config: LlmConfig): string | null {
     return "llava";
   }
   if (host.includes("openrouter.ai")) return "openai/gpt-4o-mini";
-  if (host.includes("together.xyz")) return "meta-llama/Llama-Vision-Free";
 
   return null;
 }

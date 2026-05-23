@@ -111,8 +111,8 @@ export function ModelProviderSettings() {
   return (
     <div className="space-y-4">
       <p className="text-xs text-text-muted leading-relaxed">
-        Connect any OpenAI-compatible API (OpenAI, DeepSeek, Groq, Ollama, etc.)
-        or Anthropic directly. Your key stays in this browser only.
+        Connect any OpenAI-compatible API (OpenAI, DeepSeek, MiniMax, Gemini,
+        etc.) or Anthropic directly. Your key stays in this browser only.
       </p>
 
       {configured && displayKey && (
@@ -194,7 +194,7 @@ export function ModelProviderSettings() {
 
       <Input
         label="Model"
-        helper="Exact model ID your provider expects, e.g. gpt-4o-mini, deepseek-chat, claude-sonnet-4-20250514."
+        helper="Exact model ID from your provider, e.g. gpt-4.1-mini, MiniMax-M2.7, deepseek-chat, claude-sonnet-4-20250514."
         placeholder="model-name"
         value={draft.model}
         onChange={(e) => setDraft((d) => ({ ...d, model: e.target.value }))}
