@@ -20,6 +20,13 @@ function getTimeContext(): {
   };
 }
 
+export function getWelcomeHeadline(): string {
+  const { isMorning, isAfternoon } = getTimeContext();
+  if (isMorning) return "Good morning";
+  if (isAfternoon) return "Good afternoon";
+  return "Good evening";
+}
+
 function getLocationFromMemories(memories: { text: string }[]): string | null {
   const locMem = memories.find((m) =>
     m.text.toLowerCase().startsWith("user lives in") ||
