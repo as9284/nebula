@@ -98,16 +98,12 @@ export function ChatMessage({
                 className={cn("luna-prose", showCursor && "typing-cursor")}
               >
                 {hasThinking && (
-                  <ReasoningPanel
-                    thinking={message.thinking ?? ""}
-                    isStreaming={
-                      isStreaming && isLastAssistant && !hasContent
-                    }
-                  />
+                  <ReasoningPanel thinking={message.thinking ?? ""} />
                 )}
                 {hasContent ? (
                   <LunaMarkdown content={message.content} sources={sources} />
-                ) : showPhaseIndicator ? (
+                ) : showPhaseIndicator ||
+                  (isStreaming && isLastAssistant && hasThinking) ? (
                   <ThinkingIndicator
                     key={activeStreamPhase ?? "thinking"}
                     phase={toIndicatorPhase(activeStreamPhase)}

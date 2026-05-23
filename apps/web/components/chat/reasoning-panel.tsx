@@ -1,30 +1,24 @@
 "use client";
 
 import { useId, useState } from "react";
-import { ChevronDown, ChevronRight, Sparkles } from "lucide-react";
+import { ChevronRight, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ReasoningPanelProps {
   thinking: string;
-  isStreaming?: boolean;
   className?: string;
 }
 
-export function ReasoningPanel({
-  thinking,
-  isStreaming = false,
-  className,
-}: ReasoningPanelProps) {
+export function ReasoningPanel({ thinking, className }: ReasoningPanelProps) {
   const panelId = useId();
-  const [pinnedOpen, setPinnedOpen] = useState<boolean | null>(null);
-  const expanded = pinnedOpen ?? isStreaming;
+  const [expanded, setExpanded] = useState(false);
 
   if (!thinking.trim()) return null;
 
   return (
     <div
       className={cn(
-        "mb-3 rounded-xl border border-border/80 bg-bg/60 overflow-hidden",
+        "mb-2 rounded-lg border border-border/50 bg-surface/30 overflow-hidden",
         className,
       )}
     >
@@ -33,32 +27,30 @@ export function ReasoningPanel({
         id={`${panelId}-trigger`}
         aria-expanded={expanded}
         aria-controls={`${panelId}-body`}
-        onClick={() => setPinnedOpen(!expanded)}
-        className="flex w-full items-center gap-2 px-3 py-2.5 text-left text-xs font-medium text-text-muted hover:text-text-secondary hover:bg-surface-hover/50 transition-colors"
+        onClick={() => setExpanded((v) => !v)}
+        className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-[11px] text-text-muted hover:text-text-secondary transition-colors"
       >
-        {expanded ? (
-          <ChevronDown size={14} className="shrink-0" aria-hidden />
-        ) : (
-          <ChevronRight size={14} className="shrink-0" aria-hidden />
-        )}
-        <Sparkles size={13} className="shrink-0 opacity-70" aria-hidden />
-        <span>Thinking</span>
-        {isStreaming && (
-          <span className="ml-auto text-[10px] font-normal text-text-muted animate-pulse">
-            …
-          </span>
-        )}
+        <ChevronRight
+          size={12}
+          className={cn(
+            "shrink-0 transition-transform duration-150",
+            expanded && "rotate-90",
+          )}
+          aria-hidden
+        />
+        <Sparkles size={11} className="shrink-0 opacity-60" aria-hidden />
+        <span className="font-medium">Thinking</span>
       </button>
       {expanded && (
         <div
           id={`${panelId}-body`}
           role="region"
           aria-labelledby={`${panelId}-trigger`}
-          className="px-3 pb-3 pt-0 max-h-64 overflow-y-auto border-t border-border/50"
+          className="px-2 pb-2 max-h-28 overflow-y-auto border-t border-border/40"
         >
-          <pre className="text-xs leading-relaxed text-text-muted whitespace-pre-wrap font-sans">
+          <p className="text-[11px] leading-snug text-text-muted whitespace-pre-wrap">
             {thinking}
-          </pre>
+          </p>
         </div>
       )}
     </div>

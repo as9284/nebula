@@ -5,6 +5,7 @@ import {
 import {
   type LlmStreamHandlers,
   type LlmStreamResult,
+  StreamFieldTracker,
   ThinkTagStreamSplitter,
   emitStreamDelta,
   mergeThinking,
@@ -168,7 +169,10 @@ async function streamOpenAiCompatible(
 
   let content = "";
   let thinking = "";
-  const tagSplitter = new ThinkTagStreamSplitter();
+  const useReasoningSplit = shouldUseReasoningSplit(config);
+  const contentTracker = new StreamFieldTracker();
+  const reasoningTracker = new StreamFieldTracker();
+  const tagSplitter = useReasoningSplit ? null : new ThinkTagStreamSplitter();
 
   for await (const line of readSseLines(reader)) {
     const trimmed = line.trim();
@@ -179,34 +183,43 @@ async function streamOpenAiCompatible(
       const parsed = JSON.parse(data);
       const delta = parseOpenAiStreamDelta(parsed);
 
-      if (delta.content) {
-        const split = tagSplitter.push(delta.content);
-        if (split.content) {
-          content += split.content;
+      if (delta.reasoning) {
+        const piece = reasoningTracker.push(delta.reasoning);
+        if (piece) {
+          thinking += piece;
+          handlers.onReasoning?.(piece);
         }
-        if (split.reasoning) {
-          thinking += split.reasoning;
-        }
-        emitStreamDelta(split, handlers);
       }
 
-      if (delta.reasoning) {
-        thinking += delta.reasoning;
-        handlers.onReasoning?.(delta.reasoning);
+      if (delta.content) {
+        if (useReasoningSplit) {
+          const piece = contentTracker.push(delta.content);
+          if (piece) {
+            content += piece;
+            handlers.onContent?.(piece);
+          }
+        } else {
+          const split = tagSplitter!.push(delta.content);
+          if (split.content) content += split.content;
+          if (split.reasoning) thinking += split.reasoning;
+          emitStreamDelta(split, handlers);
+        }
       }
     } catch {
       // skip malformed SSE chunks
     }
   }
 
-  const tail = tagSplitter.flush();
-  if (tail.content) {
-    content += tail.content;
-    handlers.onContent?.(tail.content);
-  }
-  if (tail.reasoning) {
-    thinking += tail.reasoning;
-    handlers.onReasoning?.(tail.reasoning);
+  if (tagSplitter) {
+    const tail = tagSplitter.flush();
+    if (tail.content) {
+      content += tail.content;
+      handlers.onContent?.(tail.content);
+    }
+    if (tail.reasoning) {
+      thinking += tail.reasoning;
+      handlers.onReasoning?.(tail.reasoning);
+    }
   }
 
   const embedded = splitEmbeddedThinking(content);

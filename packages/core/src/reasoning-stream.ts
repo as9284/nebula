@@ -42,34 +42,39 @@ export function parseOpenAiStreamDelta(raw: unknown): StreamDelta {
     out.content = delta.content;
   }
 
-  if (typeof delta.reasoning_content === "string" && delta.reasoning_content) {
-    out.reasoning = delta.reasoning_content;
-  }
-
   if (Array.isArray(delta.reasoning_details)) {
     let reasoning = "";
     for (const detail of delta.reasoning_details) {
       if (detail?.text) reasoning += detail.text;
     }
-    if (reasoning) out.reasoning = (out.reasoning ?? "") + reasoning;
+    if (reasoning) out.reasoning = reasoning;
+  } else if (
+    typeof delta.reasoning_content === "string" &&
+    delta.reasoning_content
+  ) {
+    out.reasoning = delta.reasoning_content;
   }
 
   return out;
 }
 
-/** Strip embedded `` blocks from model output. */
+const EMBEDDED_THINK_BLOCK_RE =
+  /<(?:think|monologue|redacted_thinking)>([\s\S]*?)<\/(?:think|monologue|redacted_thinking)>/gi;
+const STRAY_THINK_TAG_RE = /<\/?(?:think|monologue|redacted_thinking)>/gi;
+
+/** Strip embedded think/monologue blocks from model output. */
 export function splitEmbeddedThinking(text: string): {
   content: string;
   thinking: string;
 } {
   const thinkingParts: string[] = [];
   const content = text
-    .replace(/([\s\S]*?)<\/think>/gi, (_, inner: string) => {
+    .replace(EMBEDDED_THINK_BLOCK_RE, (_, inner: string) => {
       const trimmed = inner.trim();
       if (trimmed) thinkingParts.push(trimmed);
       return "";
     })
-    .replace(/<think>/gi, "")
+    .replace(STRAY_THINK_TAG_RE, "")
     .trim();
 
   return {
@@ -85,7 +90,33 @@ export function mergeThinking(...parts: (string | undefined)[]): string {
     .join("\n\n");
 }
 
-/** Incrementally separates `` when providers embed thinking in content. */
+/**
+ * Emits only new text when providers send cumulative snapshots per chunk
+ * (common with MiniMax reasoning_details).
+ */
+export class StreamFieldTracker {
+  private snapshot = "";
+
+  push(next: string): string {
+    if (!next) return "";
+    if (!this.snapshot) {
+      this.snapshot = next;
+      return next;
+    }
+    if (next.startsWith(this.snapshot)) {
+      const delta = next.slice(this.snapshot.length);
+      this.snapshot = next;
+      return delta;
+    }
+    this.snapshot += next;
+    return next;
+  }
+}
+
+const THINK_OPEN_TAGS = ["\x3cthink\x3e", "\x3cmonologue\x3e"] as const;
+const THINK_CLOSE_TAGS = ["\x3c/think\x3e", "\x3c/monologue\x3e"] as const;
+
+/** Incrementally separates think/monologue blocks when embedded in content. */
 export class ThinkTagStreamSplitter {
   private carry = "";
 
@@ -97,23 +128,39 @@ export class ThinkTagStreamSplitter {
     let reasoning = "";
 
     while (text.length > 0) {
-      const open = text.indexOf("");
+      let open = -1;
+      let openLen = 0;
+      for (const tag of THINK_OPEN_TAGS) {
+        const idx = text.indexOf(tag);
+        if (idx !== -1 && (open === -1 || idx < open)) {
+          open = idx;
+          openLen = tag.length;
+        }
+      }
       if (open === -1) {
         content += text;
         break;
       }
 
       content += text.slice(0, open);
-      text = text.slice(open + 7);
+      text = text.slice(open + openLen);
 
-      const close = text.indexOf("");
+      let close = -1;
+      let closeLen = 0;
+      for (const tag of THINK_CLOSE_TAGS) {
+        const idx = text.indexOf(tag);
+        if (idx !== -1 && (close === -1 || idx < close)) {
+          close = idx;
+          closeLen = tag.length;
+        }
+      }
       if (close === -1) {
         this.carry = text;
         break;
       }
 
       reasoning += text.slice(0, close);
-      text = text.slice(close + 8);
+      text = text.slice(close + closeLen);
     }
 
     const out: StreamDelta = {};
