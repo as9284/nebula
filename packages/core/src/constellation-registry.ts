@@ -64,10 +64,9 @@ export const COMMAND_TO_HANDLER_TAG: Record<ActionCommandName, string> = {
 
 const ACTION_COMMAND_PATTERN = ACTION_COMMAND_NAMES.join("|");
 
-/** Full-line bare commands: `CREATE_TASK {"title":"..."}` */
-const BARE_COMMAND_LINE_RE = new RegExp(
-  `^\\s*(${ACTION_COMMAND_PATTERN})\\s+(\\{[\\s\\S]*?\\})\\s*$`,
-  "gim",
+const BARE_COMMAND_START_RE = new RegExp(
+  `\\b(${ACTION_COMMAND_PATTERN})\\s+\\{`,
+  "gi",
 );
 
 /** Trailing partial bare command while streaming */
@@ -76,14 +75,55 @@ const TRAILING_BARE_COMMAND_RE = new RegExp(
   "i",
 );
 
+/** Inline/backtick wrapped: `DELETE_TASK {...}` */
+const INLINE_COMMAND_RE = new RegExp(
+  "`\\s*(" + ACTION_COMMAND_PATTERN + ")\\s+(\\{[\\s\\S]*?\\})\\s*`",
+  "gi",
+);
+
+function findBalancedJsonEnd(text: string, openBraceIndex: number): number | null {
+  if (text[openBraceIndex] !== "{") return null;
+  let depth = 0;
+  let inString = false;
+  let escape = false;
+  for (let i = openBraceIndex; i < text.length; i++) {
+    const ch = text[i];
+    if (inString) {
+      if (escape) {
+        escape = false;
+        continue;
+      }
+      if (ch === "\\") {
+        escape = true;
+        continue;
+      }
+      if (ch === '"') inString = false;
+      continue;
+    }
+    if (ch === '"') {
+      inString = true;
+      continue;
+    }
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return null;
+}
+
 function parseBareCommandLine(line: string): ParsedCommand | null {
   const trimmed = line.trim();
   const spaceIdx = trimmed.indexOf(" ");
   if (spaceIdx === -1) return null;
   const command = trimmed.slice(0, spaceIdx);
   if (!ACTION_COMMAND_NAMES.includes(command as ActionCommandName)) return null;
-  const jsonStr = trimmed.slice(spaceIdx + 1).trim();
-  if (!jsonStr.startsWith("{")) return null;
+  const jsonStart = trimmed.indexOf("{", spaceIdx);
+  if (jsonStart === -1) return null;
+  const jsonEnd = findBalancedJsonEnd(trimmed, jsonStart);
+  if (jsonEnd === null) return null;
+  const jsonStr = trimmed.slice(jsonStart, jsonEnd + 1);
   try {
     return {
       command,
@@ -92,6 +132,66 @@ function parseBareCommandLine(line: string): ParsedCommand | null {
   } catch {
     return null;
   }
+}
+
+function isActionCommandBody(body: string): boolean {
+  const lines = body
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+  if (lines.length === 0) return false;
+  return lines.every((line) => parseBareCommandLine(line) !== null);
+}
+
+/** Remove COMMAND + balanced JSON segments anywhere in text. */
+function stripBareActionCommands(content: string): string {
+  let result = "";
+  let lastIndex = 0;
+  BARE_COMMAND_START_RE.lastIndex = 0;
+  let match = BARE_COMMAND_START_RE.exec(content);
+  while (match) {
+    const command = match[1];
+    if (
+      !ACTION_COMMAND_NAMES.includes(command.toUpperCase() as ActionCommandName)
+    ) {
+      match = BARE_COMMAND_START_RE.exec(content);
+      continue;
+    }
+    const cmdStart = match.index;
+    const jsonStart = match.index + match[0].length - 1;
+    const jsonEnd = findBalancedJsonEnd(content, jsonStart);
+    if (jsonEnd === null) {
+      result += content.slice(lastIndex, cmdStart);
+      lastIndex = content.length;
+      break;
+    }
+    result += content.slice(lastIndex, cmdStart);
+    lastIndex = jsonEnd + 1;
+    while (lastIndex < content.length && /[ \t]/.test(content[lastIndex])) {
+      lastIndex++;
+    }
+    if (content[lastIndex] === "\r") lastIndex++;
+    if (content[lastIndex] === "\n") lastIndex++;
+    match = BARE_COMMAND_START_RE.exec(content);
+  }
+  result += content.slice(lastIndex);
+  return result;
+}
+
+function stripGenericCommandFences(content: string): string {
+  return content.replace(
+    /```[a-z0-9-]*\r?\n?([\s\S]*?)```/gi,
+    (full, body) => {
+      if (isActionCommandBody(body)) return "";
+      return full;
+    },
+  );
+}
+
+function stripOrphanCodeFences(content: string): string {
+  return content
+    .replace(/```[a-z0-9-]*\r?\n\s*```/gi, "")
+    .replace(/\n?```[a-z0-9-]*\s*(?=\n|$)/gi, "");
 }
 
 export function parseBareCommands(response: string): ParseCommandsResult {
@@ -217,9 +317,13 @@ export function stripActionSyntax(
   handlers: readonly ConstellationHandler[],
 ): string {
   let cleaned = stripCommandBlocks(content, handlers);
-  cleaned = cleaned.replace(BARE_COMMAND_LINE_RE, "");
+  cleaned = stripGenericCommandFences(cleaned);
+  cleaned = cleaned.replace(INLINE_COMMAND_RE, "");
+  cleaned = stripBareActionCommands(cleaned);
   cleaned = cleaned.replace(TRAILING_BARE_COMMAND_RE, "");
-  return cleaned.trimEnd();
+  cleaned = stripGenericCommandFences(cleaned);
+  cleaned = stripOrphanCodeFences(cleaned);
+  return cleaned.replace(/\n{3,}/g, "\n\n").trimEnd();
 }
 
 export function hasCommandBlocks(
@@ -235,6 +339,10 @@ export function hasActionSyntax(
   handlers: readonly ConstellationHandler[],
 ): boolean {
   if (hasCommandBlocks(content, handlers)) return true;
-  BARE_COMMAND_LINE_RE.lastIndex = 0;
-  return BARE_COMMAND_LINE_RE.test(content);
+  BARE_COMMAND_START_RE.lastIndex = 0;
+  if (BARE_COMMAND_START_RE.test(content)) return true;
+  for (const match of content.matchAll(/```[a-z0-9-]*\r?\n?([\s\S]*?)```/gi)) {
+    if (isActionCommandBody(match[1] ?? "")) return true;
+  }
+  return false;
 }

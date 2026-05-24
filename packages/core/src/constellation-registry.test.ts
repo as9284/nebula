@@ -32,4 +32,24 @@ describe("stripActionSyntax", () => {
     const cleaned = stripActionSyntax(partial, mockHandlers);
     assert.equal(cleaned, "Sure.");
   });
+
+  it("removes DELETE_TASKS with nested JSON", () => {
+    const raw =
+      'Done.\n\nDELETE_TASKS {"ids":["1779608185959-mhketa7"]}';
+    const cleaned = stripActionSyntax(raw, mockHandlers);
+    assert.equal(cleaned, "Done.");
+  });
+
+  it("removes generic markdown code fences wrapping commands", () => {
+    const raw =
+      "Done.\n\n```\nDELETE_TASKS {\"ids\":[\"abc\"]}\n```";
+    const cleaned = stripActionSyntax(raw, mockHandlers);
+    assert.equal(cleaned, "Done.");
+  });
+
+  it("does not strip normal fenced code", () => {
+    const raw = "Example:\n\n```js\nconsole.log(1)\n```";
+    const cleaned = stripActionSyntax(raw, mockHandlers);
+    assert.match(cleaned, /console\.log/);
+  });
 });

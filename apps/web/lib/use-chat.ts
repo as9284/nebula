@@ -290,11 +290,11 @@ export function useChat() {
         );
 
         const { cleaned, results } = await executeCommandsFromResponse(
-          streamed.content,
+          rawContent || streamed.content,
         );
         useLunaStore
           .getState()
-          .updateMessageContent(convId, assistantId, cleaned || streamed.content);
+          .updateMessageContent(convId, assistantId, cleaned);
         if (streamed.thinking) {
           useLunaStore
             .getState()
