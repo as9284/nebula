@@ -4,29 +4,8 @@ import { useState } from "react";
 import { Eye, Code2 } from "lucide-react";
 import type { CodeArtifact } from "@/types/chat";
 import { cn } from "@/lib/utils";
-import dynamic from "next/dynamic";
 import { ArtifactCodePanel } from "./artifact-code-panel";
-import { ArtifactPreviewErrorBoundary } from "./artifact-preview-error";
-
-const ReactArtifactPreview = dynamic(
-  () =>
-    import("./react-artifact-preview").then((m) => m.ReactArtifactPreview),
-  { ssr: false, loading: () => <ArtifactPreviewSkeleton /> },
-);
-
-const HtmlArtifactPreview = dynamic(
-  () =>
-    import("./html-artifact-preview").then((m) => m.HtmlArtifactPreview),
-  { ssr: false, loading: () => <ArtifactPreviewSkeleton /> },
-);
-
-function ArtifactPreviewSkeleton() {
-  return (
-    <div className="flex h-full min-h-0 items-center justify-center text-xs text-text-muted">
-      Loading preview…
-    </div>
-  );
-}
+import { ArtifactPreviewPane } from "./artifact-preview-pane";
 
 type ArtifactTab = "preview" | "code";
 
@@ -84,15 +63,7 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
 
       <div className="artifact-card-body">
         {tab === "preview" ? (
-          <div className="artifact-card-pane">
-            <ArtifactPreviewErrorBoundary>
-              {artifact.template === "html" ? (
-                <HtmlArtifactPreview artifact={artifact} />
-              ) : (
-                <ReactArtifactPreview artifact={artifact} />
-              )}
-            </ArtifactPreviewErrorBoundary>
-          </div>
+          <ArtifactPreviewPane artifact={artifact} title={title} />
         ) : (
           <div className="artifact-card-pane">
             <ArtifactCodePanel files={artifact.files} entry={artifact.entry} />
