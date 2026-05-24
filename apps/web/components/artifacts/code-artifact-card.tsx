@@ -62,19 +62,33 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
         </div>
       </div>
 
-      <div className="artifact-card-body bg-[#171714]">
-        {tab === "preview" ? (
-          artifact.template === "html" ? (
+      <div className="artifact-card-body">
+        <div
+          className={cn(
+            "artifact-card-pane h-full",
+            tab !== "preview" && "hidden",
+          )}
+          aria-hidden={tab !== "preview"}
+        >
+          {artifact.template === "html" ? (
             <HtmlArtifactPreview artifact={artifact} />
           ) : (
             <ReactArtifactPreview artifact={artifact} />
-          )
-        ) : (
+          )}
+        </div>
+        <div
+          className={cn(
+            "artifact-card-pane flex h-full flex-col",
+            tab !== "code" && "hidden",
+          )}
+          aria-hidden={tab !== "code"}
+        >
           <ArtifactCodePanel
+            className="min-h-0 flex-1"
             files={artifact.files}
             entry={artifact.entry}
           />
-        )}
+        </div>
       </div>
     </div>
   );

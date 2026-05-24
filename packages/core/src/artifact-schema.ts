@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { normalizeArtifactFiles } from "./artifact-normalize";
 
 export const ARTIFACT_TEMPLATE = ["react", "html"] as const;
 export type ArtifactTemplate = (typeof ARTIFACT_TEMPLATE)[number];
@@ -161,10 +162,14 @@ export function validateCodeArtifact(
   const depErr = validateDependencies(dependencies);
   if (depErr) return { error: depErr };
 
-  const normalizedFiles: Record<string, string> = {};
-  for (const [rawPath, content] of Object.entries(parsed.data.files)) {
-    normalizedFiles[normalizePath(rawPath)] = content;
-  }
+  const normalizedFiles = normalizeArtifactFiles(
+    Object.fromEntries(
+      Object.entries(parsed.data.files).map(([rawPath, content]) => [
+        normalizePath(rawPath),
+        content,
+      ]),
+    ),
+  );
 
   const resolvedEntry = entry
     ? normalizePath(entry)

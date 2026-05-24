@@ -7,21 +7,36 @@ import { cn } from "@/lib/utils";
 interface ArtifactCodePanelProps {
   files: Record<string, string>;
   entry?: string;
+  className?: string;
 }
 
-export function ArtifactCodePanel({ files, entry }: ArtifactCodePanelProps) {
+function languageFromPath(path: string): string | undefined {
+  if (path.endsWith(".tsx")) return "tsx";
+  if (path.endsWith(".ts")) return "typescript";
+  if (path.endsWith(".jsx")) return "jsx";
+  if (path.endsWith(".js")) return "javascript";
+  if (path.endsWith(".css")) return "css";
+  if (path.endsWith(".html")) return "html";
+  if (path.endsWith(".json")) return "json";
+  return undefined;
+}
+
+export function ArtifactCodePanel({
+  files,
+  entry,
+  className,
+}: ArtifactCodePanelProps) {
   const paths = useMemo(() => Object.keys(files).sort(), [files]);
   const [activePath, setActivePath] = useState(
-    () => entry && files[entry] ? entry : paths[0] ?? "",
+    () => entry && files[entry] ? entry : (paths[0] ?? ""),
   );
   const [copied, setCopied] = useState(false);
 
   const activeContent = files[activePath] ?? "";
+  const lang = languageFromPath(activePath);
 
   const handleCopy = async () => {
-    const all = paths
-      .map((p) => `// ${p}\n${files[p]}`)
-      .join("\n\n");
+    const all = paths.map((p) => `// ${p}\n${files[p]}`).join("\n\n");
     await navigator.clipboard.writeText(
       paths.length === 1 ? activeContent : all,
     );
@@ -36,9 +51,9 @@ export function ArtifactCodePanel({ files, entry }: ArtifactCodePanelProps) {
   }
 
   return (
-    <div className="flex min-h-[200px] flex-col">
+    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
       {paths.length > 1 && (
-        <div className="flex gap-1 overflow-x-auto border-b border-border px-2 py-1.5">
+        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1.5">
           {paths.map((path) => (
             <button
               key={path}
@@ -56,7 +71,7 @@ export function ArtifactCodePanel({ files, entry }: ArtifactCodePanelProps) {
           ))}
         </div>
       )}
-      <div className="relative flex-1 overflow-auto">
+      <div className="relative min-h-0 flex-1 overflow-auto">
         <button
           type="button"
           onClick={() => void handleCopy()}
@@ -66,8 +81,13 @@ export function ArtifactCodePanel({ files, entry }: ArtifactCodePanelProps) {
           {copied ? <Check size={12} /> : <Copy size={12} />}
           {copied ? "Copied" : "Copy"}
         </button>
-        <pre className="p-4 pr-20 text-xs font-mono leading-relaxed text-text-secondary whitespace-pre-wrap">
-          <code>{activeContent}</code>
+        <pre
+          className={cn(
+            "artifact-code-pre m-0 p-4 pr-20 text-[13px] leading-[1.55]",
+            lang === "css" && "artifact-code-pre--css",
+          )}
+        >
+          <code className={`language-${lang ?? "plaintext"}`}>{activeContent}</code>
         </pre>
       </div>
     </div>

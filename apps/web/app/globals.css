@@ -569,15 +569,51 @@ body {
   align-items: flex-start;
 }
 
+.artifact-card-body {
+  height: min(360px, 50vh);
+  min-height: 280px;
+  overflow: hidden;
+  background: #171714;
+}
+
+.artifact-card-pane {
+  min-height: 0;
+}
+
+.artifact-card-pane .sp-wrapper {
+  height: 100% !important;
+  min-height: 0;
+}
+
 .artifact-card .sp-wrapper,
 .artifact-card .sp-preview,
 .artifact-card .sp-preview-container {
   width: 100% !important;
   max-width: 100%;
+  background: #171714 !important;
 }
 
 .artifact-card .sp-preview-iframe {
   border-radius: 0;
+  background: #171714 !important;
+}
+
+.artifact-code-pre {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  color: var(--color-text-secondary);
+  white-space: pre;
+  overflow-x: auto;
+  tab-size: 2;
+}
+
+.artifact-code-pre code {
+  display: block;
+  white-space: inherit;
+}
+
+.artifact-code-pre--css code {
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .typing-cursor::after {

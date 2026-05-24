@@ -20,6 +20,7 @@ export * from "./backup-gather";
 export * from "./memory";
 export * from "./luna-prompt";
 export * from "./artifact-schema";
+export * from "./artifact-normalize";
 export * from "./constellation-registry";
 export * from "./slash-commands";
 export * from "./action-result-history";

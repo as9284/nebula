@@ -63,7 +63,7 @@ export function HtmlArtifactPreview({ artifact }: HtmlArtifactPreviewProps) {
       title={artifact.title ?? "HTML preview"}
       srcDoc={srcDoc}
       sandbox="allow-scripts"
-      className="h-[min(360px,50vh)] w-full border-0 bg-white"
+      className="h-full w-full min-h-[200px] border-0 bg-[#171714]"
     />
   );
 }
