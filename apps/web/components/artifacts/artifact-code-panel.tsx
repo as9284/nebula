@@ -51,7 +51,7 @@ export function ArtifactCodePanel({
   }
 
   return (
-    <div className={cn("flex min-h-0 flex-1 flex-col", className)}>
+    <div className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}>
       {paths.length > 1 && (
         <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1.5">
           {paths.map((path) => (
@@ -71,7 +71,7 @@ export function ArtifactCodePanel({
           ))}
         </div>
       )}
-      <div className="relative min-h-0 flex-1 overflow-auto">
+      <div className="artifact-code-scroll relative">
         <button
           type="button"
           onClick={() => void handleCopy()}

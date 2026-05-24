@@ -83,7 +83,10 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
       </div>
 
       <div className="artifact-card-body">
-        {tab === "preview" ? (
+        <div
+          className={cn("artifact-card-pane", tab !== "preview" && "hidden")}
+          aria-hidden={tab !== "preview"}
+        >
           <ArtifactPreviewErrorBoundary>
             {artifact.template === "html" ? (
               <HtmlArtifactPreview artifact={artifact} />
@@ -91,13 +94,13 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
               <ReactArtifactPreview artifact={artifact} />
             )}
           </ArtifactPreviewErrorBoundary>
-        ) : (
-          <ArtifactCodePanel
-            className="min-h-0 flex-1"
-            files={artifact.files}
-            entry={artifact.entry}
-          />
-        )}
+        </div>
+        <div
+          className={cn("artifact-card-pane", tab !== "code" && "hidden")}
+          aria-hidden={tab !== "code"}
+        >
+          <ArtifactCodePanel files={artifact.files} entry={artifact.entry} />
+        </div>
       </div>
     </div>
   );

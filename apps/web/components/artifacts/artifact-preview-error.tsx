@@ -25,7 +25,7 @@ export class ArtifactPreviewErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.error) {
       return (
-        <div className="flex h-full min-h-[200px] flex-col items-center justify-center gap-2 p-6 text-center">
+        <div className="artifact-preview-host flex flex-col items-center justify-center gap-2 p-6 text-center">
           <AlertCircle
             size={20}
             className="text-danger shrink-0"

@@ -59,11 +59,13 @@ export function HtmlArtifactPreview({ artifact }: HtmlArtifactPreviewProps) {
   const srcDoc = useMemo(() => buildHtmlSrcDoc(artifact), [artifact]);
 
   return (
-    <iframe
-      title={artifact.title ?? "HTML preview"}
-      srcDoc={srcDoc}
-      sandbox="allow-scripts"
-      className="h-full w-full min-h-[200px] border-0 bg-[#171714]"
-    />
+    <div className="artifact-preview-host">
+      <iframe
+        title={artifact.title ?? "HTML preview"}
+        srcDoc={srcDoc}
+        sandbox="allow-scripts"
+        className="h-full w-full min-h-0 flex-1 border-0 bg-[#171714]"
+      />
+    </div>
   );
 }

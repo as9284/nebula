@@ -26,6 +26,35 @@ function ensureEntryImportsCss(
   return { ...files, [entry]: next };
 }
 
+const PREVIEW_BASE_CSS = `html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+body {
+  min-height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #171714;
+}
+`;
+
+function ensurePreviewBaseStyles(
+  files: Record<string, string>,
+  entry: string,
+): Record<string, string> {
+  const stylePath = Object.keys(files).find((p) => p.endsWith(".css"));
+  if (stylePath) {
+    const existing = files[stylePath];
+    if (!/html\s*,\s*body/i.test(existing)) {
+      files[stylePath] = `${PREVIEW_BASE_CSS}\n${existing}`;
+    }
+    return files;
+  }
+  files["/styles.css"] = PREVIEW_BASE_CSS;
+  return ensureEntryImportsCss(files, entry);
+}
+
 /** Map artifact files for Sandpack without overriding the bundler entry (index.tsx). */
 export function prepareSandpackFiles(artifact: CodeArtifact): {
   files: SandpackFiles;
@@ -33,6 +62,7 @@ export function prepareSandpackFiles(artifact: CodeArtifact): {
 } {
   const entry = artifact.entry ?? "/App.tsx";
   let files = { ...artifact.files };
+  files = ensurePreviewBaseStyles(files, entry);
   files = ensureEntryImportsCss(files, entry);
 
   const sandpackFiles: SandpackFiles = {};

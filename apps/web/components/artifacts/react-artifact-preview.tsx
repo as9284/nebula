@@ -57,7 +57,7 @@ export function ReactArtifactPreview({ artifact }: ReactArtifactPreviewProps) {
   const usesTypeScript = Object.keys(files).some((p) => /\.tsx?$/i.test(p));
 
   return (
-    <>
+    <div className="artifact-preview-host">
       <SandpackStyles />
       <SandpackProvider
         template={usesTypeScript ? "react-ts" : "react"}
@@ -81,9 +81,9 @@ export function ReactArtifactPreview({ artifact }: ReactArtifactPreviewProps) {
           showRefreshButton={false}
           showOpenInCodeSandbox={false}
           showSandpackErrorOverlay
-          style={{ height: "100%", width: "100%", minHeight: 200 }}
+          style={{ flex: 1, height: "100%", width: "100%", minHeight: 0 }}
         />
       </SandpackProvider>
-    </>
+    </div>
   );
 }
