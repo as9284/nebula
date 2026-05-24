@@ -73,7 +73,7 @@ export function ArtifactPreviewPane({
         aria-label={fullscreen ? "Exit fullscreen preview" : "Fullscreen preview"}
         title={fullscreen ? "Exit fullscreen" : "Fullscreen"}
         className={cn(
-          "absolute right-2 top-2 z-20 flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs",
+          "artifact-preview-pane__action flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs",
           "bg-surface/90 text-text-secondary backdrop-blur-sm",
           "hover:text-text-primary hover:bg-surface-hover",
         )}

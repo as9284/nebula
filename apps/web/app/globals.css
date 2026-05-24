@@ -588,6 +588,17 @@ body {
   overflow: hidden;
 }
 
+.artifact-preview-pane {
+  --artifact-scrollbar-size: 17px;
+}
+
+.artifact-preview-pane__action {
+  position: absolute;
+  top: 0.5rem;
+  right: calc(0.5rem + var(--artifact-scrollbar-size));
+  z-index: 20;
+}
+
 .artifact-preview-pane:fullscreen,
 .artifact-preview-pane.artifact-preview-pane--fullscreen {
   background: #171714;
