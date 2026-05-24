@@ -99,6 +99,8 @@ Single-line JSON is allowed only if all code strings use \\n for newlines (no ra
 - **template "html"**: static page in \`/index.html\` plus optional \`/styles.css\`, \`/script.js\`. No remote script URLs.
 - **Iterations** ("make it brighter", "add hover"): emit a new artifact in this reply; reference the prior title briefly in prose.
 - **Complex UIs**: use multiple files (e.g. \`/App.tsx\`, \`/components/Card.tsx\`).
+- **Full pages** (news sites, dashboards, landing pages): use \`template: html\` with \`/index.html\`, \`/styles.css\`, optional \`/script.js\`. Keep CSS concise (under ~80KB total). Always include brief visible prose before the fence.
+- **Never** end with only internal reasoning and no user-visible reply + artifact. If the build is large, stream a short status line in prose first, then the artifact fence.
 
 **Legacy text sandbox** (plans, raw snippets, chart JSON — no live preview):
 

@@ -7,6 +7,7 @@ import { useLunaStore } from "@/stores/use-luna-store";
 import {
   getActiveStreamAssistantMessageId,
   getConversationStreamPhase,
+  getConversationStreamStatusHint,
   isConversationStreaming,
 } from "@/lib/luna-stream-selectors";
 
@@ -30,6 +31,9 @@ export function MessageList({
   const streamPhase = useLunaStore((s) =>
     getConversationStreamPhase(s, s.activeConversationId),
   );
+  const streamStatusHint = useLunaStore((s) =>
+    getConversationStreamStatusHint(s, s.activeConversationId),
+  );
   const streamingAssistantId = useLunaStore(getActiveStreamAssistantMessageId);
   const scrollRef = useRef<HTMLDivElement>(null);
   const [stickToBottom, setStickToBottom] = useState(true);
@@ -46,6 +50,7 @@ export function MessageList({
     (streamPhase === "searching" ||
       streamPhase === "describing" ||
       streamPhase === "thinking" ||
+      streamPhase === "building_ui" ||
       streamPhase === "streaming")
       ? streamPhase
       : undefined;
@@ -85,6 +90,9 @@ export function MessageList({
               isLastAssistant={msg.id === lastAssistantId}
               activeStreamPhase={
                 isActiveAssistant ? activeStreamPhase : undefined
+              }
+              streamStatusHint={
+                isActiveAssistant ? streamStatusHint : null
               }
               onRegenerate={
                 msg.id === lastAssistantId ? onRegenerate : undefined

@@ -1,10 +1,15 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Globe, Sparkles, Pencil, ImageIcon } from "lucide-react";
+import { Globe, Sparkles, Pencil, ImageIcon, LayoutTemplate } from "lucide-react";
 
 interface ThinkingIndicatorProps {
-  phase: "searching" | "describing" | "thinking" | "streaming";
+  phase:
+    | "searching"
+    | "describing"
+    | "thinking"
+    | "building_ui"
+    | "streaming";
 }
 
 const PHASE_CONFIG = {
@@ -21,6 +26,11 @@ const PHASE_CONFIG = {
   thinking: {
     label: "Thinking",
     icon: Sparkles,
+    dotCount: 3,
+  },
+  building_ui: {
+    label: "Building preview",
+    icon: LayoutTemplate,
     dotCount: 3,
   },
   streaming: {

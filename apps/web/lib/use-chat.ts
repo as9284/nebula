@@ -42,6 +42,10 @@ import {
 } from "@/lib/chat-stream-registry";
 import { notifyConversationComplete } from "@/lib/notifications";
 import { flushCloudSync } from "@/lib/cloud-sync";
+import {
+  inferStreamPhase,
+  startStreamWatchdog,
+} from "@/lib/chat-stream-feedback";
 
 function buildChatHistory(
   messages: ChatMessage[],
@@ -255,96 +259,132 @@ export function useChat() {
 
         const abortController = new AbortController();
         setStreamAbortController(convId, abortController);
+        const watchdog = startStreamWatchdog({
+          getAbortController: () => abortController,
+          onStatusHint: (hint) =>
+            useLunaStore.getState().setConversationStreamStatusHint(convId, hint),
+        });
         let hasReceivedContent = false;
         let rawContent = "";
         let rawThinking = "";
-        const streamed = await streamChat(
-          history,
-          systemPrompt,
-          llmConfig,
-          abortController.signal,
-          {
-            onContent: (token) => {
-              rawContent += token;
-              const display = stripAssistantDisplayContent(
-                rawContent,
-                constellationHandlers,
-              );
-              if (!hasReceivedContent && display.trim().length > 0) {
-                hasReceivedContent = true;
-                useLunaStore
-                  .getState()
-                  .setConversationStreamPhase(convId, "streaming");
-              }
-              flushSync(() => {
-                useLunaStore
-                  .getState()
-                  .updateMessageContent(convId, assistantId, display);
-              });
+        try {
+          const streamed = await streamChat(
+            history,
+            systemPrompt,
+            llmConfig,
+            abortController.signal,
+            {
+              onContent: (token) => {
+                watchdog.touch();
+                rawContent += token;
+                const display = stripAssistantDisplayContent(
+                  rawContent,
+                  constellationHandlers,
+                );
+                const phase = inferStreamPhase(rawContent, display);
+                if (!hasReceivedContent && display.trim().length > 0) {
+                  hasReceivedContent = true;
+                }
+                flushSync(() => {
+                  useLunaStore
+                    .getState()
+                    .setConversationStreamPhase(convId, phase);
+                  useLunaStore
+                    .getState()
+                    .updateMessageContent(convId, assistantId, display);
+                });
+              },
+              onReasoning: (token) => {
+                watchdog.touch();
+                rawThinking += token;
+                const display = stripAssistantDisplayContent(
+                  rawContent,
+                  constellationHandlers,
+                );
+                flushSync(() => {
+                  useLunaStore
+                    .getState()
+                    .setConversationStreamPhase(
+                      convId,
+                      inferStreamPhase(rawContent, display),
+                    );
+                  useLunaStore
+                    .getState()
+                    .setMessageThinking(convId, assistantId, rawThinking);
+                });
+              },
             },
-            onReasoning: (token) => {
-              rawThinking += token;
-              flushSync(() => {
-                useLunaStore
-                  .getState()
-                  .setMessageThinking(convId, assistantId, rawThinking);
-              });
-            },
-          },
-          visionParts ? { visionParts } : undefined,
-        );
+            visionParts ? { visionParts } : undefined,
+          );
 
-        const fullRaw = rawContent || streamed.content;
-        const { artifacts, artifactErrors } =
-          extractArtifactsFromResponse(fullRaw);
-        const { cleaned, results } = await executeCommandsFromResponse(fullRaw);
-        const assistantDisplay = stripAssistantDisplayContent(
-          cleaned || fullRaw,
-          constellationHandlers,
-        );
-        useLunaStore
-          .getState()
-          .updateMessageContent(convId, assistantId, assistantDisplay);
-        const commandArtifacts = results
-          .filter((r) => r.type === "ui_artifact" && r.artifact)
-          .map((r) => r.artifact as CodeArtifact);
-        const mergedArtifacts = [
-          ...artifacts,
-          ...commandArtifacts.filter(
-            (ca) => !artifacts.some((a) => a.id === ca.id),
-          ),
-        ];
-        if (mergedArtifacts.length) {
+          const fullRaw = rawContent || streamed.content;
+          const { artifacts, artifactErrors } =
+            extractArtifactsFromResponse(fullRaw);
+          const { cleaned, results } =
+            await executeCommandsFromResponse(fullRaw);
+          const assistantDisplay = stripAssistantDisplayContent(
+            cleaned || fullRaw,
+            constellationHandlers,
+          );
           useLunaStore
             .getState()
-            .setMessageArtifacts(convId, assistantId, mergedArtifacts);
-        }
-        if (streamed.thinking) {
-          useLunaStore
-            .getState()
-            .setMessageThinking(convId, assistantId, streamed.thinking);
-        }
-        const allResults = [
-          ...results,
-          ...artifactErrors,
-          ...uiArtifactActionResults(artifacts),
-        ];
-        if (allResults.length) {
-          useLunaStore.getState().setActionResults(assistantId, allResults);
-        }
-
-        const memoryHandledByCommand = results.some(
-          (r) => r.type === "memory_saved",
-        );
-        if (!memoryHandledByCommand) {
-          const newMemories = extractMemories(displayContent);
-          if (newMemories.length) {
-            useLunaStore.getState().addMemories(newMemories);
+            .updateMessageContent(convId, assistantId, assistantDisplay);
+          const commandArtifacts = results
+            .filter((r) => r.type === "ui_artifact" && r.artifact)
+            .map((r) => r.artifact as CodeArtifact);
+          const mergedArtifacts = [
+            ...artifacts,
+            ...commandArtifacts.filter(
+              (ca) => !artifacts.some((a) => a.id === ca.id),
+            ),
+          ];
+          if (mergedArtifacts.length) {
+            useLunaStore
+              .getState()
+              .setMessageArtifacts(convId, assistantId, mergedArtifacts);
           }
+          if (streamed.thinking) {
+            useLunaStore
+              .getState()
+              .setMessageThinking(convId, assistantId, streamed.thinking);
+          }
+          const allResults = [
+            ...results,
+            ...artifactErrors,
+            ...uiArtifactActionResults(artifacts),
+          ];
+          if (allResults.length) {
+            useLunaStore.getState().setActionResults(assistantId, allResults);
+          }
+
+          const memoryHandledByCommand = results.some(
+            (r) => r.type === "memory_saved",
+          );
+          if (!memoryHandledByCommand) {
+            const newMemories = extractMemories(displayContent);
+            if (newMemories.length) {
+              useLunaStore.getState().addMemories(newMemories);
+            }
+          }
+          completedSuccessfully = true;
+        } finally {
+          watchdog.stop();
         }
-        completedSuccessfully = true;
       } catch (e) {
-        if ((e as Error).name !== "AbortError") {
+        if ((e as Error).name === "AbortError") {
+          const hint =
+            useLunaStore.getState().streamingByConversationId[convId]
+              ?.statusHint;
+          const msg = useLunaStore
+            .getState()
+            .conversations.find((c) => c.id === convId)
+            ?.messages.find((m) => m.id === assistantId);
+          if (hint && !msg?.content.trim()) {
+            useLunaStore
+              .getState()
+              .updateMessageContent(convId, assistantId, hint);
+          }
+        } else {
           useLunaStore
             .getState()
             .updateMessageContent(

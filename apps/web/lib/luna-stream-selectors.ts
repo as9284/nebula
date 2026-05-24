@@ -4,7 +4,11 @@ type StreamSlice = {
   activeConversationId: string | null;
   streamingByConversationId: Record<
     string,
-    { phase: Exclude<StreamPhase, "idle">; assistantMessageId: string }
+    {
+      phase: Exclude<StreamPhase, "idle">;
+      assistantMessageId: string;
+      statusHint?: string | null;
+    }
   >;
 };
 
@@ -30,4 +34,13 @@ export function getActiveStreamAssistantMessageId(
   const id = state.activeConversationId;
   if (!id) return null;
   return state.streamingByConversationId[id]?.assistantMessageId ?? null;
+}
+
+export function getConversationStreamStatusHint(
+  state: StreamSlice,
+  conversationId: string | null | undefined,
+): string | null {
+  if (!conversationId) return null;
+  const hint = state.streamingByConversationId[conversationId]?.statusHint;
+  return hint?.trim() ? hint : null;
 }

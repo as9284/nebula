@@ -9,6 +9,7 @@ const PHASE_LABELS = {
   searching: "Stop search",
   describing: "Stop",
   thinking: "Stop thinking",
+  building_ui: "Stop building",
   streaming: "Stop",
   idle: "Stop",
 } as const;

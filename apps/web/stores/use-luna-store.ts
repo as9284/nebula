@@ -14,6 +14,7 @@ export type StreamPhase =
   | "searching"
   | "describing"
   | "thinking"
+  | "building_ui"
   | "streaming";
 
 export type ActiveStreamPhase = Exclude<StreamPhase, "idle">;
@@ -21,6 +22,8 @@ export type ActiveStreamPhase = Exclude<StreamPhase, "idle">;
 export interface ConversationStream {
   phase: ActiveStreamPhase;
   assistantMessageId: string;
+  /** Shown under the phase indicator during long or stalled streams. */
+  statusHint?: string | null;
 }
 
 interface LunaState {
@@ -39,6 +42,10 @@ interface LunaState {
   setConversationStreamPhase: (
     conversationId: string,
     phase: ActiveStreamPhase,
+  ) => void;
+  setConversationStreamStatusHint: (
+    conversationId: string,
+    statusHint: string | null,
   ) => void;
   endConversationStream: (conversationId: string) => void;
   createConversation: () => string;
@@ -108,6 +115,17 @@ export const useLunaStore = create<LunaState>()(
             streamingByConversationId: {
               ...s.streamingByConversationId,
               [conversationId]: { ...current, phase },
+            },
+          };
+        }),
+      setConversationStreamStatusHint: (conversationId, statusHint) =>
+        set((s) => {
+          const current = s.streamingByConversationId[conversationId];
+          if (!current) return s;
+          return {
+            streamingByConversationId: {
+              ...s.streamingByConversationId,
+              [conversationId]: { ...current, statusHint },
             },
           };
         }),

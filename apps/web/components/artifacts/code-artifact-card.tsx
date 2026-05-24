@@ -22,7 +22,7 @@ const HtmlArtifactPreview = dynamic(
 
 function ArtifactPreviewSkeleton() {
   return (
-    <div className="flex h-full min-h-[200px] items-center justify-center text-xs text-text-muted">
+    <div className="flex h-full min-h-0 items-center justify-center text-xs text-text-muted">
       Loading preview…
     </div>
   );
@@ -83,24 +83,21 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
       </div>
 
       <div className="artifact-card-body">
-        <div
-          className={cn("artifact-card-pane", tab !== "preview" && "hidden")}
-          aria-hidden={tab !== "preview"}
-        >
-          <ArtifactPreviewErrorBoundary>
-            {artifact.template === "html" ? (
-              <HtmlArtifactPreview artifact={artifact} />
-            ) : (
-              <ReactArtifactPreview artifact={artifact} />
-            )}
-          </ArtifactPreviewErrorBoundary>
-        </div>
-        <div
-          className={cn("artifact-card-pane", tab !== "code" && "hidden")}
-          aria-hidden={tab !== "code"}
-        >
-          <ArtifactCodePanel files={artifact.files} entry={artifact.entry} />
-        </div>
+        {tab === "preview" ? (
+          <div className="artifact-card-pane">
+            <ArtifactPreviewErrorBoundary>
+              {artifact.template === "html" ? (
+                <HtmlArtifactPreview artifact={artifact} />
+              ) : (
+                <ReactArtifactPreview artifact={artifact} />
+              )}
+            </ArtifactPreviewErrorBoundary>
+          </div>
+        ) : (
+          <div className="artifact-card-pane">
+            <ArtifactCodePanel files={artifact.files} entry={artifact.entry} />
+          </div>
+        )}
       </div>
     </div>
   );

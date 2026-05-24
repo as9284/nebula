@@ -13,13 +13,19 @@ import { useLunaStore } from "@/stores/use-luna-store";
 import type { ChatMessage as ChatMessageType } from "@/types/chat";
 import { cn } from "@/lib/utils";
 
-type ActiveStreamPhase = "searching" | "describing" | "thinking" | "streaming";
+type ActiveStreamPhase =
+  | "searching"
+  | "describing"
+  | "thinking"
+  | "building_ui"
+  | "streaming";
 
 interface ChatMessageProps {
   message: ChatMessageType;
   isStreaming: boolean;
   isLastAssistant: boolean;
   activeStreamPhase?: ActiveStreamPhase;
+  streamStatusHint?: string | null;
   onRegenerate?: () => void;
   onEditUser?: (content: string) => void;
 }
@@ -30,7 +36,8 @@ function toIndicatorPhase(
   if (
     phase === "searching" ||
     phase === "describing" ||
-    phase === "streaming"
+    phase === "streaming" ||
+    phase === "building_ui"
   ) {
     return phase;
   }
@@ -42,6 +49,7 @@ export function ChatMessage({
   isStreaming,
   isLastAssistant,
   activeStreamPhase,
+  streamStatusHint,
   onRegenerate,
   onEditUser,
 }: ChatMessageProps) {
@@ -56,11 +64,9 @@ export function ChatMessage({
   const showCursor =
     !isUser && isStreaming && isLastAssistant && hasContent;
   const showPhaseIndicator =
-    !isUser &&
-    isStreaming &&
-    isLastAssistant &&
-    !hasContent &&
-    !hasThinking;
+    !isUser && isStreaming && isLastAssistant && !hasContent;
+  const showStreamHint =
+    !isUser && isStreaming && isLastAssistant && !!streamStatusHint;
 
   return (
     <motion.div
@@ -106,13 +112,22 @@ export function ChatMessage({
                 )}
                 {hasContent ? (
                   <LunaMarkdown content={message.content} sources={sources} />
-                ) : showPhaseIndicator ||
-                  (isStreaming && isLastAssistant && hasThinking) ? (
+                ) : showPhaseIndicator ? (
                   <ThinkingIndicator
                     key={activeStreamPhase ?? "thinking"}
                     phase={toIndicatorPhase(activeStreamPhase)}
                   />
                 ) : null}
+                {showStreamHint && (
+                  <p
+                    className={cn(
+                      "text-xs text-text-muted leading-relaxed max-w-md",
+                      hasContent || showPhaseIndicator ? "mt-2" : "",
+                    )}
+                  >
+                    {streamStatusHint}
+                  </p>
+                )}
               </div>
             )}
           </div>

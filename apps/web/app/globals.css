@@ -571,22 +571,21 @@ body {
 
 .artifact-card-body {
   --artifact-pane-height: min(320px, 42vh);
+  position: relative;
   height: var(--artifact-pane-height);
   max-height: var(--artifact-pane-height);
   min-height: 220px;
-  display: flex;
-  flex-direction: column;
   overflow: hidden;
   background: #171714;
 }
 
 .artifact-card-pane {
-  flex: 1 1 0;
-  min-height: 0;
-  width: 100%;
-  overflow: hidden;
+  position: absolute;
+  inset: 0;
   display: flex;
   flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .artifact-preview-host {
