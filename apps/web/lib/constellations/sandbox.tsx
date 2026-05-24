@@ -72,13 +72,30 @@ export const sandboxHandler: ConstellationHandler = {
 
   promptInstructions: `### Sandbox — code previews & UI artifacts
 
-**Live UI (components, pages, animations):** append a \`nebula-artifact\` fence at the very end with valid JSON (no trailing commas). Do not repeat the full source in visible prose.
+**Live UI (components, pages, animations):** append ONE \`nebula-artifact\` fence at the very end. Do not repeat full source in visible prose. Prefer the **multiline** format below (models often break JSON when code spans multiple lines).
 
 \`\`\`nebula-artifact
-{"title":"Neon button","template":"react","files":{"/App.tsx":"export default function App() { return <button style={{...}}>Click</button>; }"}}
+template: react
+title: Neon button
+--- /App.tsx
+export default function App() {
+  return <button className="neon">Click me</button>;
+}
+--- /styles.css
+.neon {
+  color: #0ff;
+  text-shadow: 0 0 8px #0ff, 0 0 20px #0ff;
+  background: #111;
+  border: 1px solid #0ff;
+  padding: 12px 24px;
+  border-radius: 8px;
+  cursor: pointer;
+}
 \`\`\`
 
-- **template "react"**: interactive React demo. Default export from \`/App.tsx\` (or \`/App.jsx\`). Add \`/styles.css\` in files if needed. Optional \`dependencies\` (allowlist only): react, react-dom, framer-motion, lucide-react, clsx.
+Single-line JSON is allowed only if all code strings use \\n for newlines (no raw line breaks inside JSON strings).
+
+- **template "react"**: interactive React demo. Default export from \`/App.tsx\` (or \`/App.jsx\`). Add \`/styles.css\` via a \`--- /styles.css\` section. Optional JSON \`dependencies\` (allowlist only): react, react-dom, framer-motion, lucide-react, clsx.
 - **template "html"**: static page in \`/index.html\` plus optional \`/styles.css\`, \`/script.js\`. No remote script URLs.
 - **Iterations** ("make it brighter", "add hover"): emit a new artifact in this reply; reference the prior title briefly in prose.
 - **Complex UIs**: use multiple files (e.g. \`/App.tsx\`, \`/components/Card.tsx\`).

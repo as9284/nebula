@@ -297,13 +297,16 @@ export function stripCommandBlocks(
     cleaned = cleaned.replace(re, "");
   }
 
-  const match = cleaned.match(/\s*```([a-z-]*)$/i);
+  const match = cleaned.match(/\s*```([a-z0-9-]*)$/i);
   if (match) {
     const partial = (match[1] ?? "").toLowerCase();
-    if (
-      partial.length === 0 ||
-      handlers.some(({ tag }) => tag.startsWith(partial))
-    ) {
+    const isHandlerFencePrefix =
+      partial.length >= 5 &&
+      handlers.some(({ tag }) => {
+        const handlerTag = tag.toLowerCase();
+        return handlerTag === partial || handlerTag.startsWith(partial);
+      });
+    if (isHandlerFencePrefix) {
       cleaned = cleaned.slice(0, cleaned.length - match[0].length).trimEnd();
     }
   }

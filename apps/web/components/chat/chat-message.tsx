@@ -149,6 +149,18 @@ export function ChatMessage({
             ))}
           </div>
         )}
+        {!isUser &&
+          (!message.artifacts || message.artifacts.length === 0) &&
+          displayActionResults?.some(
+            (r) =>
+              r.type === "command_error" && r.handler === "sandbox-commands",
+          ) && (
+            <div className="mt-2 tool-card tool-card-error text-sm">
+              Preview could not be built — Luna&apos;s artifact block was
+              invalid. Try asking again; multiline{" "}
+              <code className="text-xs">--- /App.tsx</code> sections work best.
+            </div>
+          )}
         {displayActionResults && displayActionResults.length > 0 && (
           <div className="mt-2 min-w-0 max-w-full">
             <ActionResults results={displayActionResults} />

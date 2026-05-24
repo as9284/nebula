@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { normalizeArtifactFiles } from "./artifact-normalize";
+import { parseArtifactFenceBody } from "./artifact-fence-parse";
 
 export const ARTIFACT_TEMPLATE = ["react", "html"] as const;
 export type ArtifactTemplate = (typeof ARTIFACT_TEMPLATE)[number];
@@ -217,11 +218,12 @@ export function parseNebulaArtifactFences(
       errors.push({ message: "Empty nebula-artifact block" });
       continue;
     }
-    let json: unknown;
-    try {
-      json = JSON.parse(body);
-    } catch {
-      errors.push({ message: "Invalid JSON in nebula-artifact block" });
+    const json = parseArtifactFenceBody(body);
+    if (json === null) {
+      errors.push({
+        message:
+          "Could not parse nebula-artifact block (use JSON or multiline --- /path format)",
+      });
       continue;
     }
     const result = validateCodeArtifact(json, assignId);

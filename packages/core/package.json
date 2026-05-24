@@ -13,6 +13,7 @@
     "test": "node --import tsx --test src/**/*.test.ts"
   },
   "dependencies": {
+    "jsonrepair": "^3.14.0",
     "zod": "^4.4.3"
   },
   "devDependencies": {

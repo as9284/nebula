@@ -4,9 +4,29 @@ import { useState } from "react";
 import { Eye, Code2 } from "lucide-react";
 import type { CodeArtifact } from "@/types/chat";
 import { cn } from "@/lib/utils";
-import { ReactArtifactPreview } from "./react-artifact-preview";
-import { HtmlArtifactPreview } from "./html-artifact-preview";
+import dynamic from "next/dynamic";
 import { ArtifactCodePanel } from "./artifact-code-panel";
+import { ArtifactPreviewErrorBoundary } from "./artifact-preview-error";
+
+const ReactArtifactPreview = dynamic(
+  () =>
+    import("./react-artifact-preview").then((m) => m.ReactArtifactPreview),
+  { ssr: false, loading: () => <ArtifactPreviewSkeleton /> },
+);
+
+const HtmlArtifactPreview = dynamic(
+  () =>
+    import("./html-artifact-preview").then((m) => m.HtmlArtifactPreview),
+  { ssr: false, loading: () => <ArtifactPreviewSkeleton /> },
+);
+
+function ArtifactPreviewSkeleton() {
+  return (
+    <div className="flex h-full min-h-[200px] items-center justify-center text-xs text-text-muted">
+      Loading preview…
+    </div>
+  );
+}
 
 type ArtifactTab = "preview" | "code";
 
@@ -63,32 +83,21 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
       </div>
 
       <div className="artifact-card-body">
-        <div
-          className={cn(
-            "artifact-card-pane h-full",
-            tab !== "preview" && "hidden",
-          )}
-          aria-hidden={tab !== "preview"}
-        >
-          {artifact.template === "html" ? (
-            <HtmlArtifactPreview artifact={artifact} />
-          ) : (
-            <ReactArtifactPreview artifact={artifact} />
-          )}
-        </div>
-        <div
-          className={cn(
-            "artifact-card-pane flex h-full flex-col",
-            tab !== "code" && "hidden",
-          )}
-          aria-hidden={tab !== "code"}
-        >
+        {tab === "preview" ? (
+          <ArtifactPreviewErrorBoundary>
+            {artifact.template === "html" ? (
+              <HtmlArtifactPreview artifact={artifact} />
+            ) : (
+              <ReactArtifactPreview artifact={artifact} />
+            )}
+          </ArtifactPreviewErrorBoundary>
+        ) : (
           <ArtifactCodePanel
             className="min-h-0 flex-1"
             files={artifact.files}
             entry={artifact.entry}
           />
-        </div>
+        )}
       </div>
     </div>
   );
