@@ -1,6 +1,9 @@
 import type { SearchSource } from "./search";
+import type { CodeArtifact } from "../artifact-schema";
 
 export type MessageRole = "user" | "assistant";
+
+export type { CodeArtifact };
 
 /** Image attached to a user message (stored for display in thread). */
 export interface MessageImage {
@@ -19,6 +22,8 @@ export interface ChatMessage {
   createdAt: number;
   sources?: SearchSource[];
   images?: MessageImage[];
+  /** Live UI/code previews attached to an assistant message. */
+  artifacts?: CodeArtifact[];
 }
 
 export interface Conversation {

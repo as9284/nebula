@@ -9,7 +9,9 @@ import {
 import { SimpleActionGroupCard } from "./simple-action-group";
 
 export function ActionResults({ results }: { results: ActionResult[] }) {
-  const rich = results.filter(isRichActionResult);
+  const rich = results.filter(
+    (r) => isRichActionResult(r) && r.type !== "ui_artifact",
+  );
   const simpleGroups = groupSimpleActionResults(results);
 
   if (rich.length === 0 && simpleGroups.length === 0) return null;

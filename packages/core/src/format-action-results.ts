@@ -5,6 +5,7 @@ export const RICH_ACTION_TYPES = new Set([
   "weather_error",
   "short_url",
   "short_url_error",
+  "ui_artifact",
 ]);
 
 export function isRichActionResult(result: ActionResult): boolean {

@@ -6,6 +6,7 @@ import { ActionResults } from "@/components/cards/action-result";
 import { ThinkingIndicator } from "./thinking-indicator";
 import { ReasoningPanel } from "./reasoning-panel";
 import { LunaMarkdown } from "./luna-markdown";
+import { CodeArtifactCard } from "@/components/artifacts/code-artifact-card";
 import { UserMessageContent } from "./user-message-content";
 import { MessageSources } from "./message-sources";
 import { useLunaStore } from "@/stores/use-luna-store";
@@ -45,6 +46,9 @@ export function ChatMessage({
   onEditUser,
 }: ChatMessageProps) {
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
+  const displayActionResults = actionResults?.filter(
+    (r) => r.type !== "ui_artifact",
+  );
   const sources = message.sources;
   const isUser = message.role === "user";
   const hasThinking = !!message.thinking?.trim();
@@ -138,9 +142,16 @@ export function ChatMessage({
         {!isUser && sources && sources.length > 0 && !isStreaming && (
           <MessageSources sources={sources} />
         )}
-        {actionResults && actionResults.length > 0 && (
+        {!isUser && message.artifacts && message.artifacts.length > 0 && (
+          <div className="mt-2 flex min-w-0 max-w-full flex-col gap-3">
+            {message.artifacts.map((artifact) => (
+              <CodeArtifactCard key={artifact.id} artifact={artifact} />
+            ))}
+          </div>
+        )}
+        {displayActionResults && displayActionResults.length > 0 && (
           <div className="mt-2 min-w-0 max-w-full">
-            <ActionResults results={actionResults} />
+            <ActionResults results={displayActionResults} />
           </div>
         )}
       </div>

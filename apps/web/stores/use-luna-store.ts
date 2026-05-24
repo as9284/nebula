@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import type { Conversation, Memory, ChatMessage } from "@/types/chat";
+import type { Conversation, Memory, ChatMessage, CodeArtifact } from "@/types/chat";
 import { generateId } from "@/lib/utils";
 import { createIdbStorage } from "@/lib/storage";
 import { abortConversationStream } from "@/lib/chat-stream-registry";
@@ -70,6 +70,11 @@ interface LunaState {
     conversationId: string,
     messageId: string,
     sources: import("@/types/search").SearchSource[],
+  ) => void;
+  setMessageArtifacts: (
+    conversationId: string,
+    messageId: string,
+    artifacts: CodeArtifact[],
   ) => void;
   addMemories: (texts: string[]) => void;
   removeMemory: (id: string) => void;
@@ -266,6 +271,22 @@ export const useLunaStore = create<LunaState>()(
                   ...c,
                   messages: c.messages.map((m) =>
                     m.id === messageId ? { ...m, sources } : m,
+                  ),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        }));
+        triggerCloudSync();
+      },
+      setMessageArtifacts: (conversationId, messageId, artifacts) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  messages: c.messages.map((m) =>
+                    m.id === messageId ? { ...m, artifacts } : m,
                   ),
                   updatedAt: Date.now(),
                 }

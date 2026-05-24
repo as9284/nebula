@@ -569,6 +569,17 @@ body {
   align-items: flex-start;
 }
 
+.artifact-card .sp-wrapper,
+.artifact-card .sp-preview,
+.artifact-card .sp-preview-container {
+  width: 100% !important;
+  max-width: 100%;
+}
+
+.artifact-card .sp-preview-iframe {
+  border-radius: 0;
+}
+
 .typing-cursor::after {
   content: "";
   display: inline-block;

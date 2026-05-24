@@ -1,3 +1,4 @@
+import { stripNebulaArtifactFences } from "@nebula/core/artifact-schema";
 import {
   parseCommandsDetailed,
   parseBareCommands,
@@ -49,7 +50,10 @@ export async function executeCommandsFromResponse(
   content: string,
 ): Promise<{ cleaned: string; results: ActionResult[] }> {
   if (!hasActionSyntax(content, constellationHandlers)) {
-    return { cleaned: content, results: [] };
+    return {
+      cleaned: stripNebulaArtifactFences(content),
+      results: [],
+    };
   }
 
   const allResults: ActionResult[] = [];
@@ -78,6 +82,8 @@ export async function executeCommandsFromResponse(
     }
   }
 
-  const cleaned = stripActionSyntax(content, constellationHandlers);
+  const cleaned = stripNebulaArtifactFences(
+    stripActionSyntax(content, constellationHandlers),
+  );
   return { cleaned, results: allResults };
 }

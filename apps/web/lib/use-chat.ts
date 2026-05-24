@@ -19,7 +19,11 @@ import { describeImagesForChat } from "@/lib/describe-images-client";
 import { resolveVisionHelperConfig } from "@nebula/core/vision-support";
 import { completeText, searchWeb, streamChat } from "@/lib/stream-client";
 import { executeCommandsFromResponse } from "@/lib/commands";
-import { stripActionSyntax } from "@/lib/constellation-registry";
+import {
+  extractArtifactsFromResponse,
+  stripAssistantDisplayContent,
+  uiArtifactActionResults,
+} from "@/lib/artifact-processing";
 import { flushSync } from "react-dom";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
@@ -30,6 +34,7 @@ import type { StreamMessage } from "@/lib/stream-client";
 import { buildSearchQuery } from "@/lib/search-query";
 import { formatActionResultsForHistory } from "@/lib/action-result-history";
 import type { ActionResult } from "@/lib/constellation-registry";
+import type { CodeArtifact } from "@/types/chat";
 import {
   abortConversationStream,
   clearStreamAbortController,
@@ -261,7 +266,7 @@ export function useChat() {
           {
             onContent: (token) => {
               rawContent += token;
-              const display = stripActionSyntax(
+              const display = stripAssistantDisplayContent(
                 rawContent,
                 constellationHandlers,
               );
@@ -289,19 +294,43 @@ export function useChat() {
           visionParts ? { visionParts } : undefined,
         );
 
-        const { cleaned, results } = await executeCommandsFromResponse(
-          rawContent || streamed.content,
+        const fullRaw = rawContent || streamed.content;
+        const { artifacts, artifactErrors } =
+          extractArtifactsFromResponse(fullRaw);
+        const { cleaned, results } = await executeCommandsFromResponse(fullRaw);
+        const assistantDisplay = stripAssistantDisplayContent(
+          cleaned || fullRaw,
+          constellationHandlers,
         );
         useLunaStore
           .getState()
-          .updateMessageContent(convId, assistantId, cleaned);
+          .updateMessageContent(convId, assistantId, assistantDisplay);
+        const commandArtifacts = results
+          .filter((r) => r.type === "ui_artifact" && r.artifact)
+          .map((r) => r.artifact as CodeArtifact);
+        const mergedArtifacts = [
+          ...artifacts,
+          ...commandArtifacts.filter(
+            (ca) => !artifacts.some((a) => a.id === ca.id),
+          ),
+        ];
+        if (mergedArtifacts.length) {
+          useLunaStore
+            .getState()
+            .setMessageArtifacts(convId, assistantId, mergedArtifacts);
+        }
         if (streamed.thinking) {
           useLunaStore
             .getState()
             .setMessageThinking(convId, assistantId, streamed.thinking);
         }
-        if (results.length) {
-          useLunaStore.getState().setActionResults(assistantId, results);
+        const allResults = [
+          ...results,
+          ...artifactErrors,
+          ...uiArtifactActionResults(artifacts),
+        ];
+        if (allResults.length) {
+          useLunaStore.getState().setActionResults(assistantId, allResults);
         }
 
         const memoryHandledByCommand = results.some(

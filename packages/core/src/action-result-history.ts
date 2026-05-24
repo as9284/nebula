@@ -41,6 +41,13 @@ function formatOneResult(result: ActionResult): string | null {
       return `- Shortened URL → ${String(result.short ?? "")}`;
     case "sandbox_open":
       return `- Opened sandbox (${String(result.sandboxType ?? "code")})`;
+    case "ui_artifact": {
+      const artifact = result.artifact as { id?: string; title?: string } | undefined;
+      const id = String(artifact?.id ?? "").trim();
+      const title = String(artifact?.title ?? "UI preview").trim();
+      if (!id) return `- Rendered UI artifact "${title}"`;
+      return `- Rendered UI artifact "${title}" [${id}]`;
+    }
     case "memory_saved": {
       const text = String(result.text ?? result.title ?? "").trim();
       if (!text) return null;
