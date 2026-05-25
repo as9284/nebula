@@ -358,6 +358,7 @@ export const useLunaStore = create<LunaState>()(
         conversations: s.conversations,
         activeConversationId: s.activeConversationId,
         memories: s.memories,
+        actionResults: s.actionResults,
       }),
     },
   ),

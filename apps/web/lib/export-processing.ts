@@ -1,16 +1,20 @@
-import {
-  parseNebulaExportFences,
-  validateFileExport,
-  type FileExport,
-} from "@nebula/core/export-schema";
+import { extractAllExportsFromContent } from "@nebula/core/export-infer";
+import { validateFileExport, type FileExport } from "@nebula/core/export-schema";
 import type { ActionResult } from "@/lib/constellation-registry";
 import { generateId } from "@/lib/utils";
 
-export function extractExportsFromResponse(content: string): {
+export function extractExportsFromResponse(
+  content: string,
+  userMessage?: string,
+): {
   exports: FileExport[];
   exportErrors: ActionResult[];
 } {
-  const { exports, errors } = parseNebulaExportFences(content, generateId);
+  const { exports, errors } = extractAllExportsFromContent(
+    content,
+    generateId,
+    userMessage,
+  );
   const exportErrors: ActionResult[] = errors.map((e) => ({
     type: "file_error",
     handler: "file-commands",

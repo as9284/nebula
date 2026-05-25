@@ -190,10 +190,17 @@ function stripGenericCommandFences(content: string): string {
   );
 }
 
+const TOOL_FENCE_LANG_RE =
+  /^(nebula-export|nebula-artifact|file-commands|sandbox-commands|orbit-commands|memory-commands|solaris-commands|hyperlane-commands)$/i;
+
 function stripOrphanCodeFences(content: string): string {
   return content
-    .replace(/```[a-z0-9-]*\r?\n\s*```/gi, "")
-    .replace(/\n?```[a-z0-9-]*\s*(?=\n|$)/gi, "");
+    .replace(/```([a-z0-9-]*)\r?\n\s*```/gi, (full, lang) =>
+      TOOL_FENCE_LANG_RE.test((lang ?? "").trim()) ? full : "",
+    )
+    .replace(/\n?```([a-z0-9-]*)\s*(?=\n|$)/gi, (full, lang) =>
+      TOOL_FENCE_LANG_RE.test((lang ?? "").trim()) ? full : "",
+    );
 }
 
 export function parseBareCommands(response: string): ParseCommandsResult {

@@ -10,6 +10,12 @@ function readMetaValue(block: string, key: string): string | undefined {
   return match?.[1]?.trim();
 }
 
+function readMetaValueAnyCase(block: string, key: string): string | undefined {
+  const re = new RegExp(`^${key}\\s*:\\s*(.+)$`, "im");
+  const match = block.match(re);
+  return match?.[1]?.trim();
+}
+
 function parseFormat(raw: string | undefined): ExportFormat | null {
   if (!raw) return null;
   const normalized = raw.trim().toLowerCase() as ExportFormat;
@@ -31,7 +37,7 @@ export function parseMultilineExportBody(
   const exportBody = parts.slice(1).join("\n---\n").replace(/\s+$/, "");
   if (!exportBody.trim()) return null;
 
-  const format = parseFormat(readMetaValue(metaBlock, "format"));
+  const format = parseFormat(readMetaValueAnyCase(metaBlock, "format"));
   if (!format) return null;
 
   const payload: Record<string, unknown> = {
@@ -39,11 +45,41 @@ export function parseMultilineExportBody(
     body: exportBody,
   };
 
-  const filename = readMetaValue(metaBlock, "filename");
+  const filename = readMetaValueAnyCase(metaBlock, "filename");
   if (filename) payload.filename = filename;
-  const title = readMetaValue(metaBlock, "title");
+  const title = readMetaValueAnyCase(metaBlock, "title");
   if (title) payload.title = title;
 
+  return payload;
+}
+
+/** Meta lines at top without a --- separator before body. */
+export function parseMetaOnlyExportBody(
+  body: string,
+): Record<string, unknown> | null {
+  const trimmed = body.trim();
+  if (!trimmed || trimmed.startsWith("{")) return null;
+
+  const format = parseFormat(readMetaValueAnyCase(trimmed, "format"));
+  if (!format) return null;
+
+  const lines = trimmed.split("\n");
+  const bodyStart = lines.findIndex((line, idx) => {
+    if (idx === 0) return false;
+    const t = line.trim();
+    return t.length > 0 && !/^[a-z]+\s*:/i.test(t);
+  });
+  if (bodyStart === -1) return null;
+
+  const metaBlock = lines.slice(0, bodyStart).join("\n");
+  const exportBody = lines.slice(bodyStart).join("\n").trim();
+  if (!exportBody) return null;
+
+  const payload: Record<string, unknown> = { format, body: exportBody };
+  const filename = readMetaValueAnyCase(metaBlock, "filename");
+  if (filename) payload.filename = filename;
+  const title = readMetaValueAnyCase(metaBlock, "title");
+  if (title) payload.title = title;
   return payload;
 }
 
@@ -70,5 +106,8 @@ export function parseExportFenceBody(body: string): unknown | null {
   const json = parseExportFenceJson(trimmed);
   if (json !== null) return json;
 
-  return parseMultilineExportBody(trimmed);
+  const multiline = parseMultilineExportBody(trimmed);
+  if (multiline !== null) return multiline;
+
+  return parseMetaOnlyExportBody(trimmed);
 }

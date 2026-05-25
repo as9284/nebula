@@ -17,7 +17,9 @@ export const exportHandler: ConstellationHandler = {
 
 Use when the user wants a file to download (PDF, DOCX, TXT, HTML, CSV, JSON, Markdown).
 
-**Primary:** append ONE or more \`nebula-export\` fences at the very end. Include brief visible prose before the fence. Prefer **multiline** format (models break JSON with long bodies):
+**Visible reply:** ONE short sentence only (e.g. "Your file is ready."). Never paste the document, HTML, markdown, or code in visible chat — the Download button appears automatically; users must not see the full file content in the thread.
+
+**Primary:** append ONE or more \`nebula-export\` fences at the very end (after that one sentence). Prefer **multiline** format (models break JSON with long bodies):
 
 \`\`\`nebula-export
 format: pdf
@@ -31,9 +33,10 @@ Revenue grew 12% year over year.
 - **format**: txt | md | html | json | csv | pdf | docx
 - **filename**: safe name with extension (e.g. notes.txt, report.pdf)
 - **title**: optional display title
-- Body after \`---\`: markdown for pdf/docx/md; plain text for txt; HTML for html; valid JSON for json; CSV rows for csv
+- Body after \`---\`: markdown for pdf/docx/md; plain text for txt; full HTML document for html; valid JSON for json; CSV rows for csv
+- If you omit \`---\`, put format/filename lines first, then the body on following lines
 
-**Do not** use nebula-artifact for downloads — artifacts are for live UI preview only.
+**Do not** use nebula-artifact or a generic \`\`\`html code block for downloads.
 **Do not** use CREATE_NOTE for file exports.
 
 Small payloads only — optional legacy fence:

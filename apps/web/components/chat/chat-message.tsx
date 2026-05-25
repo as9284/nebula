@@ -57,6 +57,9 @@ export function ChatMessage({
   const displayActionResults = actionResults?.filter(
     (r) => r.type !== "ui_artifact",
   );
+  const hasFileExport = displayActionResults?.some(
+    (r) => r.type === "file_generated",
+  );
   const sources = message.sources;
   const isUser = message.role === "user";
   const hasThinking = !!message.thinking?.trim();
@@ -64,7 +67,11 @@ export function ChatMessage({
   const showCursor =
     !isUser && isStreaming && isLastAssistant && hasContent;
   const showPhaseIndicator =
-    !isUser && isStreaming && isLastAssistant && !hasContent;
+    !isUser &&
+    isStreaming &&
+    isLastAssistant &&
+    !hasContent &&
+    !hasFileExport;
   const showStreamHint =
     !isUser && isStreaming && isLastAssistant && !!streamStatusHint;
 

@@ -28,6 +28,7 @@ import {
   extractExportsFromResponse,
   fileExportActionResults,
 } from "@/lib/export-processing";
+import { resolveExportDisplayMessage } from "@nebula/core/export-display";
 import { flushSync } from "react-dom";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
@@ -325,12 +326,16 @@ export function useChat() {
           const { artifacts, artifactErrors } =
             extractArtifactsFromResponse(fullRaw);
           const { exports: fileExports, exportErrors } =
-            extractExportsFromResponse(fullRaw);
+            extractExportsFromResponse(fullRaw, displayContent);
           const { cleaned, results } =
             await executeCommandsFromResponse(fullRaw);
-          const assistantDisplay = stripAssistantDisplayContent(
+          let assistantDisplay = stripAssistantDisplayContent(
             cleaned || fullRaw,
             constellationHandlers,
+          );
+          assistantDisplay = resolveExportDisplayMessage(
+            assistantDisplay,
+            fileExports,
           );
           useLunaStore
             .getState()

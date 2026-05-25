@@ -163,8 +163,16 @@ export function parseNebulaExportFences(
 }
 
 /** Remove nebula-export fences and trailing partial fences from visible chat text. */
+const ALT_EXPORT_FENCE_RE =
+  /```(html|htm|markdown|md|txt|text|csv|json)\s*\r?\n[\s\S]*?```/gi;
+
+export function stripAlternateExportFences(content: string): string {
+  return content.replace(ALT_EXPORT_FENCE_RE, "").replace(/\n{3,}/g, "\n\n").trimEnd();
+}
+
 export function stripNebulaExportFences(content: string): string {
   let cleaned = content.replace(EXPORT_FENCE_RE, "");
+  cleaned = cleaned.replace(ALT_EXPORT_FENCE_RE, "");
   cleaned = cleaned.replace(TRAILING_EXPORT_FENCE_RE, "");
   const partial = cleaned.match(/\s*```nebula-export\s*$/i);
   if (partial) {
