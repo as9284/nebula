@@ -1,7 +1,7 @@
 import type { ActiveStreamPhase } from "@/stores/use-luna-store";
 
 const ARTIFACT_IN_PROGRESS_RE =
-  /```nebula-artifact|^\s*template\s*:\s*(react|html)\s*$/im;
+  /```nebula-(?:artifact|export)|^\s*template\s*:\s*(react|html)\s*$|^\s*format\s*:\s*(txt|md|html|json|csv|pdf|docx)\s*$/im;
 
 export function inferStreamPhase(
   rawContent: string,

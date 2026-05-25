@@ -4,6 +4,7 @@ import { orbitHandler } from "./orbit";
 import { solarisHandler } from "./solaris";
 import { hyperlaneHandler } from "./hyperlane";
 import { sandboxHandler } from "./sandbox";
+import { exportHandler } from "./export";
 
 export const constellationHandlers: readonly ConstellationHandler[] = [
   memoryHandler,
@@ -11,4 +12,5 @@ export const constellationHandlers: readonly ConstellationHandler[] = [
   solarisHandler,
   hyperlaneHandler,
   sandboxHandler,
+  exportHandler,
 ];

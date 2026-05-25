@@ -6,6 +6,8 @@ export const RICH_ACTION_TYPES = new Set([
   "short_url",
   "short_url_error",
   "ui_artifact",
+  "file_generated",
+  "file_error",
 ]);
 
 export function isRichActionResult(result: ActionResult): boolean {

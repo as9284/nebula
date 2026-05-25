@@ -1,4 +1,5 @@
-import { stripNebulaArtifactFences } from "@nebula/core/artifact-schema";
+import { stripNebulaArtifactFences, hasNebulaArtifactFences } from "@nebula/core/artifact-schema";
+import { stripNebulaExportFences, hasNebulaExportFences } from "@nebula/core/export-schema";
 import {
   parseCommandsDetailed,
   parseBareCommands,
@@ -46,14 +47,17 @@ function groupBareCommandsByHandler(
   return map;
 }
 
+function stripInlineModelFences(content: string): string {
+  return stripNebulaExportFences(stripNebulaArtifactFences(content));
+}
+
 export async function executeCommandsFromResponse(
   content: string,
 ): Promise<{ cleaned: string; results: ActionResult[] }> {
-  if (!hasActionSyntax(content, constellationHandlers)) {
-    return {
-      cleaned: stripNebulaArtifactFences(content),
-      results: [],
-    };
+  const hasFences =
+    hasNebulaArtifactFences(content) || hasNebulaExportFences(content);
+  if (!hasActionSyntax(content, constellationHandlers) && !hasFences) {
+    return { cleaned: content, results: [] };
   }
 
   const allResults: ActionResult[] = [];
@@ -82,7 +86,7 @@ export async function executeCommandsFromResponse(
     }
   }
 
-  const cleaned = stripNebulaArtifactFences(
+  const cleaned = stripInlineModelFences(
     stripActionSyntax(content, constellationHandlers),
   );
   return { cleaned, results: allResults };

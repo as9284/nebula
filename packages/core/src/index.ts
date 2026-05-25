@@ -22,6 +22,8 @@ export * from "./luna-prompt";
 export * from "./artifact-schema";
 export * from "./artifact-normalize";
 export * from "./artifact-fence-parse";
+export * from "./export-schema";
+export * from "./export-fence-parse";
 export * from "./constellation-registry";
 export * from "./slash-commands";
 export * from "./action-result-history";

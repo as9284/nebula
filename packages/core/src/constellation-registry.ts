@@ -40,6 +40,7 @@ export const ACTION_COMMAND_NAMES = [
   "GET_WEATHER",
   "SHORTEN_URL",
   "OPEN_SANDBOX",
+  "GENERATE_FILE",
 ] as const;
 
 export type ActionCommandName = (typeof ACTION_COMMAND_NAMES)[number];
@@ -60,6 +61,7 @@ export const COMMAND_TO_HANDLER_TAG: Record<ActionCommandName, string> = {
   GET_WEATHER: "solaris-commands",
   SHORTEN_URL: "hyperlane-commands",
   OPEN_SANDBOX: "sandbox-commands",
+  GENERATE_FILE: "file-commands",
 };
 
 const ACTION_COMMAND_PATTERN = ACTION_COMMAND_NAMES.join("|");

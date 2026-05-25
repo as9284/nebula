@@ -24,6 +24,10 @@ import {
   stripAssistantDisplayContent,
   uiArtifactActionResults,
 } from "@/lib/artifact-processing";
+import {
+  extractExportsFromResponse,
+  fileExportActionResults,
+} from "@/lib/export-processing";
 import { flushSync } from "react-dom";
 import { extractMemories } from "@/lib/memory";
 import { slashToParsedCommands } from "@/lib/slash-commands";
@@ -320,6 +324,8 @@ export function useChat() {
           const fullRaw = rawContent || streamed.content;
           const { artifacts, artifactErrors } =
             extractArtifactsFromResponse(fullRaw);
+          const { exports: fileExports, exportErrors } =
+            extractExportsFromResponse(fullRaw);
           const { cleaned, results } =
             await executeCommandsFromResponse(fullRaw);
           const assistantDisplay = stripAssistantDisplayContent(
@@ -351,7 +357,9 @@ export function useChat() {
           const allResults = [
             ...results,
             ...artifactErrors,
+            ...exportErrors,
             ...uiArtifactActionResults(artifacts),
+            ...fileExportActionResults(fileExports),
           ];
           if (allResults.length) {
             useLunaStore.getState().setActionResults(assistantId, allResults);

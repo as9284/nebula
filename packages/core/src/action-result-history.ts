@@ -48,6 +48,14 @@ function formatOneResult(result: ActionResult): string | null {
       if (!id) return `- Rendered UI artifact "${title}"`;
       return `- Rendered UI artifact "${title}" [${id}]`;
     }
+    case "file_generated": {
+      const id = String(result.id ?? "").trim();
+      const filename = String(result.filename ?? "file").trim();
+      if (!id) return `- Generated file "${filename}"`;
+      return `- Generated file "${filename}" [${id}]`;
+    }
+    case "file_error":
+      return `- File export error: ${String(result.message ?? "unknown")}`;
     case "memory_saved": {
       const text = String(result.text ?? result.title ?? "").trim();
       if (!text) return null;

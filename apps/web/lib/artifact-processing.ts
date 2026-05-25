@@ -3,6 +3,7 @@ import {
   stripNebulaArtifactFences,
   type CodeArtifact,
 } from "@nebula/core/artifact-schema";
+import { stripNebulaExportFences } from "@nebula/core/export-schema";
 import { stripActionSyntax } from "@/lib/constellation-registry";
 import type { ConstellationHandler } from "@/lib/constellation-registry";
 import type { ActionResult } from "@/lib/constellation-registry";
@@ -12,7 +13,10 @@ export function stripAssistantDisplayContent(
   content: string,
   handlers: readonly ConstellationHandler[],
 ): string {
-  return stripActionSyntax(stripNebulaArtifactFences(content), handlers);
+  return stripActionSyntax(
+    stripNebulaExportFences(stripNebulaArtifactFences(content)),
+    handlers,
+  );
 }
 
 export function extractArtifactsFromResponse(content: string): {
