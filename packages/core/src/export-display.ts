@@ -1,3 +1,4 @@
+import { stripLeakedActionHistoryFromDisplay } from "./action-result-history";
 import type { FileExport } from "./export-schema";
 
 const MAX_VISIBLE_EXPORT_CHARS = 280;
@@ -21,7 +22,9 @@ export function resolveExportDisplayMessage(
   display: string,
   exports: FileExport[],
 ): string {
-  if (exports.length === 0) return display;
+  if (exports.length === 0) {
+    return stripLeakedActionHistoryFromDisplay(display);
+  }
 
   const trimmed = display.trim();
   const ack = defaultExportAckMessage(exports);
@@ -62,5 +65,5 @@ export function resolveExportDisplayMessage(
     if (looksLikeDocument) return ack;
   }
 
-  return trimmed;
+  return stripLeakedActionHistoryFromDisplay(trimmed);
 }

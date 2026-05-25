@@ -5,6 +5,16 @@ import {
   type FileExport,
 } from "./export-schema";
 
+const FORMAT_EXTENSION: Record<ExportFormat, string> = {
+  txt: ".txt",
+  md: ".md",
+  html: ".html",
+  json: ".json",
+  csv: ".csv",
+  pdf: ".pdf",
+  docx: ".docx",
+};
+
 const ALT_EXPORT_FENCE_RE =
   /```(html|htm|markdown|md|txt|text|csv|json)\s*\r?\n([\s\S]*?)```/gi;
 
@@ -34,10 +44,49 @@ function detectFormatFromUserMessage(userMessage: string): ExportFormat | null {
   return null;
 }
 
+/** Guess a friendly filename from the user's request. */
+export function suggestExportFilename(
+  userMessage: string,
+  format: ExportFormat,
+): string | undefined {
+  const ext = FORMAT_EXTENSION[format];
+  const escaped = ext.replace(".", "\\.");
+  const explicit = userMessage.match(
+    new RegExp(`([\\w][\\w.-]*${escaped})`, "i"),
+  );
+  if (explicit) return explicit[1];
+
+  const lower = userMessage.toLowerCase();
+  if (format === "html" && /test.*html|html.*test/.test(lower)) {
+    return `test-document${ext}`;
+  }
+  if (/test|sample|demo/.test(lower)) {
+    return `test-document${ext}`;
+  }
+  return undefined;
+}
+
+function filenameScore(name: string): number {
+  return name.startsWith("export-") ? 0 : 1;
+}
+
+/** One export per format; prefer nebula-export names over auto-generated export-{id}.* */
+export function dedupeExportsByFormat(exports: FileExport[]): FileExport[] {
+  const byFormat = new Map<ExportFormat, FileExport>();
+  for (const exp of exports) {
+    const existing = byFormat.get(exp.format);
+    if (!existing || filenameScore(exp.filename) > filenameScore(existing.filename)) {
+      byFormat.set(exp.format, exp);
+    }
+  }
+  return [...byFormat.values()];
+}
+
 /** Parse ```html / ```md / etc. as downloadable exports. */
 export function parseAlternateExportFences(
   content: string,
   assignId: () => string,
+  userMessage?: string,
 ): FileExport[] {
   const exports: FileExport[] = [];
 
@@ -47,7 +96,13 @@ export function parseAlternateExportFences(
     const format = langToFormat(lang);
     if (!format || !codeBody) continue;
 
-    const result = validateFileExport({ format, body: codeBody }, assignId);
+    const filename = userMessage
+      ? suggestExportFilename(userMessage, format)
+      : undefined;
+    const result = validateFileExport(
+      { format, body: codeBody, filename },
+      assignId,
+    );
     if ("export" in result) exports.push(result.export);
   }
 
@@ -70,7 +125,7 @@ export function inferExportFromIntent(
   const format = detectFormatFromUserMessage(userMessage);
   if (!format) return [];
 
-  const fromAlt = parseAlternateExportFences(rawAssistant, assignId);
+  const fromAlt = parseAlternateExportFences(rawAssistant, assignId, userMessage);
   if (fromAlt.length > 0) return [];
 
   let body = stripFencesForBody(rawAssistant);
@@ -80,7 +135,8 @@ export function inferExportFromIntent(
 
   if (body.length < 20) return [];
 
-  const result = validateFileExport({ format, body }, assignId);
+  const filename = suggestExportFilename(userMessage, format);
+  const result = validateFileExport({ format, body, filename }, assignId);
   return "export" in result ? [result.export] : [];
 }
 
@@ -90,22 +146,20 @@ export function extractAllExportsFromContent(
   userMessage?: string,
 ): { exports: FileExport[]; errors: { message: string }[] } {
   const { exports: primary, errors } = parseNebulaExportFences(content, assignId);
-  const seen = new Set(primary.map((e) => e.id));
+  const primaryFormats = new Set(primary.map((e) => e.format));
   const merged = [...primary];
 
-  for (const alt of parseAlternateExportFences(content, assignId)) {
-    if (seen.has(alt.id)) continue;
-    seen.add(alt.id);
+  for (const alt of parseAlternateExportFences(content, assignId, userMessage)) {
+    if (primaryFormats.has(alt.format)) continue;
     merged.push(alt);
+    primaryFormats.add(alt.format);
   }
 
   if (userMessage && merged.length === 0) {
     for (const inferred of inferExportFromIntent(userMessage, content, assignId)) {
-      if (seen.has(inferred.id)) continue;
-      seen.add(inferred.id);
       merged.push(inferred);
     }
   }
 
-  return { exports: merged, errors };
+  return { exports: dedupeExportsByFormat(merged), errors };
 }

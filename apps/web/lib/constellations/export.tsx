@@ -17,7 +17,7 @@ export const exportHandler: ConstellationHandler = {
 
 Use when the user wants a file to download (PDF, DOCX, TXT, HTML, CSV, JSON, Markdown).
 
-**Visible reply:** ONE short sentence only (e.g. "Your file is ready."). Never paste the document, HTML, markdown, or code in visible chat — the Download button appears automatically; users must not see the full file content in the thread.
+**Visible reply:** ONE short sentence only (e.g. "Your file is ready."). Never paste the document, HTML, markdown, or code in visible chat — the Download button appears automatically; users must not see the full file content in the thread. Never output \`[Actions executed]\` headers or \`Generated file … [id]\` lines — those are internal only.
 
 **Primary:** append ONE or more \`nebula-export\` fences at the very end (after that one sentence). Prefer **multiline** format (models break JSON with long bodies):
 

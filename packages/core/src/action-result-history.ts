@@ -48,12 +48,9 @@ function formatOneResult(result: ActionResult): string | null {
       if (!id) return `- Rendered UI artifact "${title}"`;
       return `- Rendered UI artifact "${title}" [${id}]`;
     }
-    case "file_generated": {
-      const id = String(result.id ?? "").trim();
-      const filename = String(result.filename ?? "file").trim();
-      if (!id) return `- Generated file "${filename}"`;
-      return `- Generated file "${filename}" [${id}]`;
-    }
+    case "file_generated":
+      // Download card is shown in the UI; omit from history so the model does not echo it.
+      return null;
     case "file_error":
       return `- File export error: ${String(result.message ?? "unknown")}`;
     case "memory_saved": {
@@ -71,6 +68,20 @@ function formatOneResult(result: ActionResult): string | null {
     default:
       return null;
   }
+}
+
+const ACTION_HISTORY_BLOCK_RE =
+  /\n*\[Actions executed[^\]]*\][\s\S]*$/i;
+
+/** Internal action-summary lines the model sometimes echoes into visible chat. */
+const LEAKED_ACTION_LINE_RE =
+  /^- (?:Generated file|Created task|Created note|Created project|Rendered UI artifact|Saved to Luna memory|Removed from Luna memory|Opened sandbox|Shortened URL →|Fetched weather for|File export error|Error:)[^\n]*\n?/gim;
+
+/** Remove leaked action-history blocks from user-visible assistant text. */
+export function stripLeakedActionHistoryFromDisplay(content: string): string {
+  let cleaned = content.replace(ACTION_HISTORY_BLOCK_RE, "");
+  cleaned = cleaned.replace(LEAKED_ACTION_LINE_RE, "");
+  return cleaned.replace(/\n{3,}/g, "\n\n").trimEnd();
 }
 
 /** Append to assistant turns in API history only (not shown in the chat UI). */
