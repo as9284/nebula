@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" fill="none">
+  <rect width="512" height="512" fill="#171714"/>
+  <defs>
+    <radialGradient id="nb-glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(256 248) rotate(90) scale(150 135)">
+      <stop stop-color="#d8cff8"/>
+      <stop offset="0.35" stop-color="#8a78e6"/>
+      <stop offset="0.75" stop-color="#6b5cc6" stop-opacity="0.5"/>
+      <stop offset="1" stop-color="#8a78e6" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="nb-cloud" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(248 262) scale(100)">
+      <stop stop-color="#b5a6f0" stop-opacity="0.9"/>
+      <stop offset="1" stop-color="#8a78e6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <g transform="translate(56 56) scale(0.78)">
+    <ellipse cx="236" cy="272" rx="132" ry="98" fill="url(#nb-cloud)" opacity="0.85"/>
+    <ellipse cx="296" cy="232" rx="108" ry="82" fill="#7d6dd8" opacity="0.35"/>
+    <circle cx="256" cy="246" r="76" fill="url(#nb-glow)"/>
+    <circle cx="264" cy="238" r="20" fill="#ebe7fb"/>
+    <circle cx="264" cy="238" r="9" fill="#ffffff" opacity="0.92"/>
+  </g>
+</svg>

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Providers } from "@/components/providers";
+import { buildSiteMetadata } from "@/lib/site-metadata";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -21,45 +22,7 @@ export const viewport: Viewport = {
   themeColor: "#171714",
 };
 
-export const metadata: Metadata = {
-  title: { default: "Nebula · Luna", template: "%s · Nebula" },
-  description: "Local-first AI chat powered by Luna — tasks, weather, links, and more in one chat.",
-  keywords: ["AI", "chat", "assistant", "local-first", "tasks", "weather", "productivity"],
-  authors: [{ name: "Anthony Saliba" }],
-  creator: "Anthony Saliba",
-  manifest: "/manifest.json",
-  icons: {
-    icon: "/logo.svg",
-    shortcut: "/logo.svg",
-    apple: "/logo.svg",
-  },
-  appleWebApp: {
-    capable: true,
-    statusBarStyle: "black-translucent",
-    title: "Nebula",
-  },
-  applicationName: "Nebula",
-  formatDetection: {
-    telephone: false,
-  },
-  openGraph: {
-    type: "website",
-    locale: "en_US",
-    siteName: "Nebula · Luna",
-    title: "Nebula · Luna",
-    description: "Local-first AI chat powered by Luna — tasks, weather, links, and more in one chat.",
-  },
-  twitter: {
-    card: "summary_large_image",
-    title: "Nebula · Luna",
-    description: "Local-first AI chat powered by Luna — tasks, weather, links, and more in one chat.",
-    creator: "@as9284",
-  },
-  robots: {
-    index: true,
-    follow: true,
-  },
-};
+export const metadata: Metadata = buildSiteMetadata();
 
 export default function RootLayout({
   children,

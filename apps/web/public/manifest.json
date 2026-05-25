@@ -1,7 +1,7 @@
 {
-  "name": "Nebula · Luna",
+  "name": "Nebula",
   "short_name": "Nebula",
-  "description": "Local-first AI chat powered by Luna",
+  "description": "Local-first AI chat — tasks, weather, links, and more in one place.",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#171714",
@@ -13,7 +13,13 @@
       "src": "/logo.svg",
       "sizes": "any",
       "type": "image/svg+xml",
-      "purpose": "any maskable"
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
     }
   ],
   "categories": ["productivity", "utilities"],

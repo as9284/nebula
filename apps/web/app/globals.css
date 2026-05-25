@@ -22,6 +22,9 @@
   --overlay-backdrop: rgba(0, 0, 0, 0.45);
   --color-logo-bg: #1f1f1c;
   --color-logo-ring: rgba(232, 230, 227, 0.08);
+  --color-logo-glow-inner: #d8cff8;
+  --color-logo-core: #ebe7fb;
+  --color-logo-core-bright: #ffffff;
   --color-code-inline: rgba(255, 255, 255, 0.06);
   --color-code-block: #141412;
   --color-link-underline: rgba(255, 255, 255, 0.25);
@@ -84,6 +87,9 @@ html.light {
   --overlay-backdrop: rgba(0, 0, 0, 0.35);
   --color-logo-bg: #eeede9;
   --color-logo-ring: rgba(0, 0, 0, 0.06);
+  --color-logo-glow-inner: #e8e2fa;
+  --color-logo-core: #f5f2fd;
+  --color-logo-core-bright: #ffffff;
   --color-code-inline: rgba(0, 0, 0, 0.06);
   --color-code-block: #eeede9;
   --color-link-underline: rgba(0, 0, 0, 0.2);

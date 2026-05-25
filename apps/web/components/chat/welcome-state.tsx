@@ -15,20 +15,76 @@ function Logo({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-hidden
     >
+      <defs>
+        <radialGradient
+          id="welcome-nebula-glow"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(256 244) rotate(90) scale(190 170)"
+        >
+          <stop stopColor="var(--color-logo-glow-inner)" />
+          <stop offset="0.55" stopColor="var(--color-luna)" />
+          <stop offset="1" stopColor="var(--color-luna)" stopOpacity="0" />
+        </radialGradient>
+        <radialGradient
+          id="welcome-nebula-cloud"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(248 262) scale(120)"
+        >
+          <stop stopColor="var(--color-logo-glow-inner)" stopOpacity="0.9" />
+          <stop offset="1" stopColor="var(--color-luna)" stopOpacity="0" />
+        </radialGradient>
+      </defs>
       <rect width="512" height="512" rx="128" fill="var(--color-logo-bg)" />
-      <circle
-        cx="256"
-        cy="256"
-        r="168"
+      <rect
+        x="1.5"
+        y="1.5"
+        width="509"
+        height="509"
+        rx="126.5"
         stroke="var(--color-logo-ring)"
         strokeWidth="1.5"
       />
-      <path
-        d="M264 96c79.5 0 144 64.5 144 144s-64.5 144-144 144c-10.2 0-20.1-1.1-29.6-3.1 52.6-14.5 91.6-63.1 91.6-121.9 0-58.8-39-107.4-91.6-121.9C243.9 97.1 253.8 96 264 96z"
-        fill="currentColor"
+      <ellipse
+        cx="256"
+        cy="256"
+        rx="176"
+        ry="169"
+        stroke="var(--color-logo-ring)"
+        strokeWidth="1.25"
       />
-      <circle cx="390" cy="140" r="5" fill="currentColor" opacity="0.35" />
-      <circle cx="140" cy="380" r="3" fill="currentColor" opacity="0.2" />
+      <ellipse
+        cx="236"
+        cy="272"
+        rx="132"
+        ry="98"
+        fill="url(#welcome-nebula-cloud)"
+        opacity="0.88"
+      />
+      <ellipse
+        cx="296"
+        cy="232"
+        rx="108"
+        ry="82"
+        fill="var(--color-luna)"
+        opacity="0.22"
+      />
+      <circle cx="256" cy="246" r="76" fill="url(#welcome-nebula-glow)" />
+      <circle cx="264" cy="238" r="20" fill="var(--color-logo-core)" />
+      <circle cx="264" cy="238" r="9" fill="var(--color-logo-core-bright)" />
+      <circle cx="106" cy="146" r="3.5" fill="currentColor" opacity="0.35" />
+      <circle cx="404" cy="128" r="2.5" fill="currentColor" opacity="0.25" />
+      <circle cx="382" cy="372" r="2.25" fill="var(--color-luna)" opacity="0.45" />
+      <path
+        d="M150 358l3.8 7.6 7.6 1.1-5.7 4.9 1.5 7.6-6.8-3.6-6.8 3.6 1.5-7.6-5.7-4.9 7.6-1.1z"
+        fill="currentColor"
+        opacity="0.22"
+      />
     </svg>
   );
 }
@@ -76,7 +132,7 @@ export function WelcomeState({
             transition={{ duration: 0.35, delay: 0.1 }}
             className="mt-1 text-[2rem] font-semibold tracking-tight text-text-primary sm:text-[2.25rem]"
           >
-            Luna
+            Nebula
           </motion.h1>
         </header>
 
