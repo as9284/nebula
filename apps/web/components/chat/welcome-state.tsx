@@ -132,7 +132,7 @@ export function WelcomeState({
             transition={{ duration: 0.35, delay: 0.1 }}
             className="mt-1 text-[2rem] font-semibold tracking-tight text-text-primary sm:text-[2.25rem]"
           >
-            Nebula
+            Luna
           </motion.h1>
         </header>
 
