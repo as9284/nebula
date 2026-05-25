@@ -175,11 +175,11 @@ html.light {
 .nebula-welcome-hero::before {
   content: "";
   position: absolute;
-  inset: -3.5rem;
+  inset: -4rem;
   background: radial-gradient(
     circle at 50% 45%,
-    color-mix(in srgb, var(--color-luna) 22%, transparent),
-    transparent 68%
+    color-mix(in srgb, var(--color-luna) 32%, transparent),
+    transparent 62%
   );
   pointer-events: none;
   z-index: 0;
@@ -188,8 +188,38 @@ html.light {
 .nebula-welcome-logo {
   position: relative;
   z-index: 1;
-  border-radius: 1.25rem;
-  box-shadow: var(--shadow-elevated);
+  border-radius: 1.375rem;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--color-luna) 12%, transparent),
+    0 12px 40px -12px color-mix(in srgb, var(--color-luna) 45%, transparent),
+    var(--shadow-elevated);
+}
+
+.nebula-welcome-suggestion {
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+html.light .nebula-welcome-suggestion {
+  background: var(--color-surface);
+}
+
+.nebula-welcome-suggestion:hover {
+  border-color: var(--color-luna-border);
+  background: color-mix(in srgb, var(--color-surface) 70%, var(--color-luna-bg));
+  box-shadow: 0 6px 20px -8px color-mix(in srgb, var(--color-luna) 30%, transparent);
+}
+
+.nebula-welcome-suggestion:focus-visible {
+  outline: 2px solid var(--color-luna);
+  outline-offset: 2px;
 }
 
 .nebula-suggestion-pill {

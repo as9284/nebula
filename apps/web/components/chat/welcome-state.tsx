@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowRight, ArrowUpRight } from "lucide-react";
 import { generateSuggestions, getWelcomeHeadline } from "@/lib/suggestions";
 import { cn } from "@/lib/utils";
 
@@ -103,17 +103,17 @@ export function WelcomeState({
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4, ease: "easeOut" }}
-        className="flex w-full min-w-0 max-w-2xl flex-col gap-5 sm:gap-6"
+        className="flex w-full min-w-0 max-w-xl translate-y-4 flex-col sm:max-w-2xl sm:translate-y-6"
       >
-        <header className="flex flex-col items-center text-center">
+        <header className="mb-8 flex flex-col items-center text-center sm:mb-10">
           <motion.div
             initial={{ opacity: 0, scale: 0.94 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.45, ease: "easeOut" }}
-            className="nebula-welcome-hero mb-4 sm:mb-5"
+            className="nebula-welcome-hero mb-5 sm:mb-6"
           >
-            <span className="nebula-welcome-logo nebula-panel flex h-[4.25rem] w-[4.25rem] items-center justify-center sm:h-[4.75rem] sm:w-[4.75rem]">
-              <Logo className="h-11 w-11 text-text-primary sm:h-12 sm:w-12" />
+            <span className="nebula-welcome-logo flex h-[4.5rem] w-[4.5rem] items-center justify-center sm:h-[5rem] sm:w-[5rem]">
+              <Logo className="h-12 w-12 text-text-primary sm:h-[3.25rem] sm:w-[3.25rem]" />
             </span>
           </motion.div>
 
@@ -130,7 +130,7 @@ export function WelcomeState({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
-            className="mt-1 text-[2rem] font-semibold tracking-tight text-text-primary sm:text-[2.25rem]"
+            className="mt-1.5 text-[2.125rem] font-semibold tracking-tight text-text-primary sm:text-[2.5rem]"
           >
             Luna
           </motion.h1>
@@ -141,41 +141,44 @@ export function WelcomeState({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.35, delay: 0.14, ease: "easeOut" }}
           aria-label="Suggestions"
-          className="nebula-panel nebula-shadow-elevated rounded-2xl p-3 sm:p-4"
+          className="flex w-full flex-col gap-3"
         >
-          <p className="mb-3 px-1 text-[11px] font-medium uppercase tracking-[0.14em] text-text-muted">
+          <p className="text-center text-[11px] font-medium uppercase tracking-[0.16em] text-text-muted">
             Try asking
           </p>
 
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-            {suggestions.map((s, i) => (
-              <motion.button
-                key={s}
-                type="button"
-                onClick={() => onSuggest(s)}
-                initial={{ opacity: 0, y: 6 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{
-                  duration: 0.28,
-                  delay: 0.18 + i * 0.04,
-                }}
-                whileHover={{ scale: 1.015 }}
-                whileTap={{ scale: 0.985 }}
-                className={cn(
-                  "nebula-suggestion-pill group flex w-full min-w-0 items-center gap-2 rounded-xl px-3 py-2.5 text-left text-sm sm:px-3.5 sm:py-3",
-                )}
-              >
-                <span className="min-w-0 flex-1 leading-snug text-text-primary">
-                  {s}
-                </span>
-                <ArrowUpRight
-                  size={14}
-                  strokeWidth={1.5}
-                  className="shrink-0 text-luna opacity-50 transition-opacity group-hover:opacity-100"
-                  aria-hidden
-                />
-              </motion.button>
-            ))}
+          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+            {suggestions.map((s, i) => {
+              const ArrowIcon = i % 2 === 0 ? ArrowRight : ArrowUpRight;
+              return (
+                <motion.button
+                  key={s}
+                  type="button"
+                  onClick={() => onSuggest(s)}
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{
+                    duration: 0.28,
+                    delay: 0.18 + i * 0.04,
+                  }}
+                  whileHover={{ scale: 1.012 }}
+                  whileTap={{ scale: 0.988 }}
+                  className={cn(
+                    "nebula-welcome-suggestion group flex w-full min-w-0 items-center gap-2 rounded-2xl px-3 py-3 text-left text-[13px] leading-snug sm:px-3.5 sm:py-3.5 sm:text-sm",
+                  )}
+                >
+                  <span className="min-w-0 flex-1 text-text-primary">
+                    {s}
+                  </span>
+                  <ArrowIcon
+                    size={14}
+                    strokeWidth={1.5}
+                    className="shrink-0 text-text-muted transition-colors group-hover:text-luna"
+                    aria-hidden
+                  />
+                </motion.button>
+              );
+            })}
           </div>
         </motion.section>
       </motion.div>
