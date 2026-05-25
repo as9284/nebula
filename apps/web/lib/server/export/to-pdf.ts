@@ -1,27 +1,57 @@
 import { parseMarkdownBlocks } from "./markdown-blocks";
 
 type PdfContent = Record<string, unknown>;
-type PdfDocDefinition = { content: PdfContent[]; styles?: Record<string, unknown>; defaultStyle?: Record<string, unknown> };
-
-type PdfPrinter = {
-  createPdf: (doc: PdfDocDefinition) => {
-    getBuffer: () => Promise<Buffer | Uint8Array>;
-  };
-  vfs?: Record<string, string>;
+type PdfDocDefinition = {
+  content: PdfContent[];
+  styles?: Record<string, unknown>;
+  defaultStyle?: Record<string, unknown>;
 };
 
-async function getPdfPrinter(): Promise<PdfPrinter> {
-  const pdfMakeModule = await import("pdfmake/build/pdfmake");
-  const vfsModule = await import("pdfmake/build/vfs_fonts");
-  const pdfMake = pdfMakeModule.default as PdfPrinter & {
-    vfs?: Record<string, string>;
-  };
-  const vfs =
-    (vfsModule as { pdfMake?: { vfs: Record<string, string> } }).pdfMake?.vfs ??
-    (vfsModule as { default?: { pdfMake?: { vfs: Record<string, string> } } })
-      .default?.pdfMake?.vfs;
-  if (vfs) pdfMake.vfs = vfs;
-  return pdfMake;
+type PdfDocument = {
+  getBuffer: (
+    callback: (buffer: Buffer, error?: Error) => void,
+  ) => void;
+};
+
+type PdfMakeInstance = {
+  addVirtualFileSystem: (vfs: Record<string, string>) => void;
+  setFonts: (fonts: Record<string, Record<string, string>>) => void;
+  createPdf: (doc: PdfDocDefinition) => PdfDocument;
+};
+
+let pdfMakeReady: Promise<PdfMakeInstance> | null = null;
+
+async function getPdfMake(): Promise<PdfMakeInstance> {
+  if (!pdfMakeReady) {
+    pdfMakeReady = (async () => {
+      const pdfMakeModule = await import("pdfmake/build/pdfmake");
+      const vfsModule = await import("pdfmake/build/vfs_fonts");
+      const pdfMake = pdfMakeModule.default as PdfMakeInstance;
+      const vfs = vfsModule.default as Record<string, string>;
+
+      pdfMake.addVirtualFileSystem(vfs);
+      pdfMake.setFonts({
+        Roboto: {
+          normal: "Roboto-Regular.ttf",
+          bold: "Roboto-Medium.ttf",
+          italics: "Roboto-Italic.ttf",
+          bolditalics: "Roboto-MediumItalic.ttf",
+        },
+      });
+
+      return pdfMake;
+    })();
+  }
+  return pdfMakeReady;
+}
+
+function getPdfBuffer(doc: PdfDocument): Promise<Buffer> {
+  return new Promise((resolve, reject) => {
+    doc.getBuffer((buffer, error) => {
+      if (error) reject(error);
+      else resolve(Buffer.from(buffer));
+    });
+  });
 }
 
 function blocksToPdfContent(body: string, title?: string): PdfContent[] {
@@ -52,7 +82,6 @@ function blocksToPdfContent(body: string, title?: string): PdfContent[] {
       case "code":
         content.push({
           text: block.text,
-          font: "Courier",
           fontSize: 9,
           margin: [0, 4, 0, 8],
           preserveLeadingSpaces: true,
@@ -72,7 +101,7 @@ export async function markdownToPdfBuffer(
   body: string,
   title?: string,
 ): Promise<Buffer> {
-  const pdfMake = await getPdfPrinter();
+  const pdfMake = await getPdfMake();
   const docDefinition: PdfDocDefinition = {
     content: blocksToPdfContent(body, title),
     styles: {
@@ -81,10 +110,9 @@ export async function markdownToPdfBuffer(
       h2: { fontSize: 15, bold: true },
       h3: { fontSize: 13, bold: true },
     },
-    defaultStyle: { fontSize: 11 },
+    defaultStyle: { fontSize: 11, font: "Roboto" },
   };
 
   const pdf = pdfMake.createPdf(docDefinition);
-  const buffer = await pdf.getBuffer();
-  return Buffer.from(buffer);
+  return getPdfBuffer(pdf);
 }
