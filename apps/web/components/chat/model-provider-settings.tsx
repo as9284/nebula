@@ -112,7 +112,8 @@ export function ModelProviderSettings() {
     <div className="space-y-4">
       <p className="text-xs text-text-muted leading-relaxed">
         Connect any OpenAI-compatible API (OpenAI, DeepSeek, MiniMax, Gemini,
-        etc.) or Anthropic directly. Your key stays in this browser only.
+        Ollama, LM Studio, etc.) or Anthropic directly. Your key stays in this
+        browser only.
       </p>
 
       {configured && displayKey && (
@@ -183,7 +184,7 @@ export function ModelProviderSettings() {
         label="API key"
         helper={
           draft.provider === "openai"
-            ? "From your provider dashboard. For Ollama locally, any placeholder (e.g. ollama) is fine."
+            ? "From your provider dashboard. For Ollama or LM Studio locally, any placeholder (e.g. ollama, lm-studio) is fine."
             : "From console.anthropic.com → API keys."
         }
         placeholder={llmConfig.apiKey ? "Enter new key to replace" : "sk-… or your provider key"}

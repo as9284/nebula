@@ -79,6 +79,14 @@ export const LLM_PRESETS: LlmPreset[] = [
     hint: "Run Ollama locally; API key can be any placeholder.",
   },
   {
+    id: "lmstudio",
+    label: "LM Studio (local)",
+    provider: "openai",
+    baseUrl: "http://localhost:1234/v1/chat/completions",
+    model: "local-model",
+    hint: "Start the Local Server in LM Studio. Use the model ID from the server tab or GET /v1/models. API key can be any placeholder (e.g. lm-studio).",
+  },
+  {
     id: "anthropic",
     label: "Anthropic",
     provider: "anthropic",

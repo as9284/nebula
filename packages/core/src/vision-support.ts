@@ -83,7 +83,8 @@ export function suggestVisionModel(config: LlmConfig): string | null {
   if (
     host.includes("localhost") ||
     host.includes("127.0.0.1") ||
-    url.includes(":11434")
+    url.includes(":11434") ||
+    url.includes(":1234")
   ) {
     return "llava";
   }
