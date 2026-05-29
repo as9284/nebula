@@ -104,10 +104,27 @@ export function isLlmConfigured(config: LlmConfig): boolean {
 export function normalizeOpenAiCompletionsUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
   if (!trimmed) return trimmed;
-  const completions = trimmed.endsWith("/chat/completions")
-    ? trimmed
-    : `${trimmed}/chat/completions`;
+  let completions: string;
+  if (trimmed.endsWith("/chat/completions")) {
+    completions = trimmed;
+  } else if (isBareOrigin(trimmed)) {
+    // Bare host like http://localhost:1234 — OpenAI-compatible servers
+    // (Ollama, LM Studio) serve the API under /v1, so don't drop it.
+    completions = `${trimmed}/v1/chat/completions`;
+  } else {
+    // Has a path already (e.g. ".../v1") — just append the endpoint.
+    completions = `${trimmed}/chat/completions`;
+  }
   return forceIpv4Loopback(completions);
+}
+
+function isBareOrigin(url: string): boolean {
+  try {
+    const { pathname } = new URL(url);
+    return pathname === "" || pathname === "/";
+  } catch {
+    return false;
+  }
 }
 
 /**

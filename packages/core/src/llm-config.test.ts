@@ -58,6 +58,24 @@ describe("normalizeOpenAiCompletionsUrl", () => {
     );
   });
 
+  it("inserts /v1 for a bare host (Ollama/LM Studio serve under /v1)", () => {
+    assert.equal(
+      normalizeOpenAiCompletionsUrl("http://localhost:1234"),
+      "http://127.0.0.1:1234/v1/chat/completions",
+    );
+    assert.equal(
+      normalizeOpenAiCompletionsUrl("http://localhost:1234/"),
+      "http://127.0.0.1:1234/v1/chat/completions",
+    );
+  });
+
+  it("preserves a no-/v1 completions URL (e.g. DeepSeek)", () => {
+    assert.equal(
+      normalizeOpenAiCompletionsUrl("https://api.deepseek.com/chat/completions"),
+      "https://api.deepseek.com/chat/completions",
+    );
+  });
+
   it("strips trailing slashes before appending", () => {
     assert.equal(
       normalizeOpenAiCompletionsUrl("https://api.openai.com/v1/"),
