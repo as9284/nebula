@@ -50,7 +50,16 @@ export async function POST(req: Request) {
           controller.enqueue(encoder.encode("data: [DONE]\n\n"));
           controller.close();
         } catch (e) {
-          controller.error(e);
+          if (req.signal.aborted) {
+            controller.close();
+            return;
+          }
+          const message = e instanceof Error ? e.message : String(e);
+          controller.enqueue(
+            encoder.encode(`data: ${JSON.stringify({ error: message })}\n\n`),
+          );
+          controller.enqueue(encoder.encode("data: [DONE]\n\n"));
+          controller.close();
         }
       },
     });

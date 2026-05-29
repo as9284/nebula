@@ -75,29 +75,34 @@ export async function streamChat(
       if (!trimmed.startsWith("data:")) continue;
       const data = trimmed.slice(5).trim();
       if (data === "[DONE]") continue;
+      let parsed: {
+        error?: string;
+        choices?: {
+          delta?: { content?: string; reasoning?: string };
+        }[];
+      };
       try {
-        const parsed = JSON.parse(data) as {
-          choices?: {
-            delta?: { content?: string; reasoning?: string };
-          }[];
-        };
-        const delta = parsed.choices?.[0]?.delta;
-        if (!delta) continue;
-
-        if (delta.content) {
-          await deliverStreamingText(delta.content, async (slice) => {
-            content += slice;
-            await handlers.onContent?.(slice);
-          });
-        }
-        if (delta.reasoning) {
-          await deliverStreamingText(delta.reasoning, async (slice) => {
-            thinking += slice;
-            await handlers.onReasoning?.(slice);
-          });
-        }
+        parsed = JSON.parse(data);
       } catch {
-        // skip malformed SSE chunks
+        continue; // skip malformed SSE chunks
+      }
+
+      if (parsed.error) throw new Error(parsed.error);
+
+      const delta = parsed.choices?.[0]?.delta;
+      if (!delta) continue;
+
+      if (delta.content) {
+        await deliverStreamingText(delta.content, async (slice) => {
+          content += slice;
+          await handlers.onContent?.(slice);
+        });
+      }
+      if (delta.reasoning) {
+        await deliverStreamingText(delta.reasoning, async (slice) => {
+          thinking += slice;
+          await handlers.onReasoning?.(slice);
+        });
       }
     }
   }

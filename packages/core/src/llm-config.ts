@@ -104,9 +104,28 @@ export function isLlmConfigured(config: LlmConfig): boolean {
 export function normalizeOpenAiCompletionsUrl(url: string): string {
   const trimmed = url.trim().replace(/\/+$/, "");
   if (!trimmed) return trimmed;
-  if (trimmed.endsWith("/chat/completions")) return trimmed;
-  if (trimmed.endsWith("/v1")) return `${trimmed}/chat/completions`;
-  return `${trimmed}/chat/completions`;
+  const completions = trimmed.endsWith("/chat/completions")
+    ? trimmed
+    : `${trimmed}/chat/completions`;
+  return forceIpv4Loopback(completions);
+}
+
+/**
+ * Node's fetch resolves "localhost" to IPv6 (::1) first, but Ollama and
+ * LM Studio bind to IPv4 (127.0.0.1) only by default — so requests to a
+ * "localhost" base URL fail with ECONNREFUSED. Pin loopback to IPv4.
+ */
+export function forceIpv4Loopback(url: string): string {
+  try {
+    const u = new URL(url);
+    if (u.hostname === "localhost") {
+      u.hostname = "127.0.0.1";
+      return u.toString();
+    }
+  } catch {
+    // not an absolute URL — leave it untouched
+  }
+  return url;
 }
 
 /** Migrate legacy DeepSeek-only key storage. */

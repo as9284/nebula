@@ -30,6 +30,36 @@ export type LlmContentPart =
 const ANTHROPIC_VERSION = "2023-06-01";
 const ANTHROPIC_DEFAULT_URL = "https://api.anthropic.com/v1/messages";
 
+function describeConnectionError(url: string, err: unknown): string {
+  let host = url;
+  let isLocal = false;
+  try {
+    const u = new URL(url);
+    host = `${u.protocol}//${u.host}`;
+    isLocal =
+      u.hostname === "127.0.0.1" ||
+      u.hostname === "localhost" ||
+      u.hostname === "::1";
+  } catch {
+    // keep the raw url as the host label
+  }
+  if (isLocal) {
+    return `Could not connect to the local model server at ${host}. Make sure Ollama or LM Studio is running and its local server has been started.`;
+  }
+  const detail = err instanceof Error ? err.message : String(err);
+  return `Could not reach the model endpoint at ${host} (${detail}).`;
+}
+
+/** fetch wrapper that turns opaque network failures into actionable messages. */
+async function llmFetch(url: string, init: RequestInit): Promise<Response> {
+  try {
+    return await fetch(url, init);
+  } catch (err) {
+    if (init.signal?.aborted) throw err;
+    throw new Error(describeConnectionError(url, err));
+  }
+}
+
 function parseUpstreamError(
   body: unknown,
   fallback: string,
@@ -147,7 +177,7 @@ async function streamOpenAiCompatible(
     body.reasoning_split = true;
   }
 
-  const res = await fetch(url, {
+  const res = await llmFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -235,7 +265,7 @@ async function completeOpenAiCompatibleMessages(
   messages: LlmMessage[],
 ): Promise<string> {
   const url = normalizeOpenAiCompletionsUrl(config.baseUrl);
-  const res = await fetch(url, {
+  const res = await llmFetch(url, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -268,7 +298,7 @@ async function streamAnthropic(
   handlers: LlmStreamHandlers,
 ): Promise<LlmStreamResult> {
   const { system, messages: anthropicMessages } = toAnthropicMessages(messages);
-  const res = await fetch(anthropicUrl(config), {
+  const res = await llmFetch(anthropicUrl(config), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -345,7 +375,7 @@ async function completeAnthropicMessages(
   messages: LlmMessage[],
 ): Promise<string> {
   const { system, messages: anthropicMessages } = toAnthropicMessages(messages);
-  const res = await fetch(anthropicUrl(config), {
+  const res = await llmFetch(anthropicUrl(config), {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
