@@ -22,6 +22,37 @@ function parseFormat(raw: string | undefined): ExportFormat | null {
   return EXPORT_FORMATS.includes(normalized) ? normalized : null;
 }
 
+const EXTENSION_FORMAT: Record<string, ExportFormat> = {
+  ".txt": "txt",
+  ".md": "md",
+  ".markdown": "md",
+  ".html": "html",
+  ".htm": "html",
+  ".json": "json",
+  ".csv": "csv",
+  ".pdf": "pdf",
+  ".docx": "docx",
+};
+
+/** Map a filename's extension to an export format (e.g. report.pdf → pdf). */
+function formatFromFilename(filename: string | undefined): ExportFormat | null {
+  if (!filename) return null;
+  const dot = filename.lastIndexOf(".");
+  if (dot < 0) return null;
+  return EXTENSION_FORMAT[filename.slice(dot).toLowerCase()] ?? null;
+}
+
+/**
+ * The declared `format:` if valid, else inferred from the `filename:` extension.
+ * Smaller local models often give one but not the other.
+ */
+function resolveFormat(metaBlock: string): ExportFormat | null {
+  return (
+    parseFormat(readMetaValueAnyCase(metaBlock, "format")) ??
+    formatFromFilename(readMetaValueAnyCase(metaBlock, "filename"))
+  );
+}
+
 /** LLM-friendly multiline format: meta lines, then ---, then body. */
 export function parseMultilineExportBody(
   body: string,
@@ -37,7 +68,7 @@ export function parseMultilineExportBody(
   const exportBody = parts.slice(1).join("\n---\n").replace(/\s+$/, "");
   if (!exportBody.trim()) return null;
 
-  const format = parseFormat(readMetaValueAnyCase(metaBlock, "format"));
+  const format = resolveFormat(metaBlock);
   if (!format) return null;
 
   const payload: Record<string, unknown> = {
@@ -60,7 +91,7 @@ export function parseMetaOnlyExportBody(
   const trimmed = body.trim();
   if (!trimmed || trimmed.startsWith("{")) return null;
 
-  const format = parseFormat(readMetaValueAnyCase(trimmed, "format"));
+  const format = resolveFormat(trimmed);
   if (!format) return null;
 
   const lines = trimmed.split("\n");

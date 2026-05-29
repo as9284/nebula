@@ -27,6 +27,42 @@ export default function App() {
     assert.match(files["/App.tsx"], /button/);
     assert.match(files["/styles.css"], /\.neon/);
   });
+
+  it("parses when the meta block is omitted (header is the first line)", () => {
+    const body = `--- /App.tsx
+export default function App() { return <span>ok</span>; }`;
+    const parsed = parseMultilineArtifactBody(body);
+    assert.ok(parsed);
+    assert.equal(parsed.template, "react");
+    const files = parsed.files as Record<string, string>;
+    assert.match(files["/App.tsx"], /ok/);
+  });
+
+  it("infers the html template from file extensions", () => {
+    const body = `--- /index.html
+<!doctype html><html><body>News</body></html>
+--- /styles.css
+body { margin: 0; }`;
+    const parsed = parseMultilineArtifactBody(body);
+    assert.ok(parsed);
+    assert.equal(parsed.template, "html");
+    const files = parsed.files as Record<string, string>;
+    assert.ok(files["/index.html"]);
+    assert.ok(files["/styles.css"]);
+  });
+
+  it("tolerates missing slash, missing space, and extra dashes in headers", () => {
+    const body = `template: react
+---- App.jsx
+export default () => null;
+---/styles.css
+.x { color: red; }`;
+    const parsed = parseMultilineArtifactBody(body);
+    assert.ok(parsed);
+    const files = parsed.files as Record<string, string>;
+    assert.ok(files["/App.jsx"]);
+    assert.ok(files["/styles.css"]);
+  });
 });
 
 describe("parseArtifactFenceBody", () => {

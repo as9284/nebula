@@ -39,6 +39,36 @@ Revenue grew 12%.
     assert.equal(exports[0].body, "Hello world");
   });
 
+  it("infers format from the filename when format: is omitted", () => {
+    const content = `Your file is ready.
+
+\`\`\`nebula-export
+filename: report.pdf
+title: Q4 Report
+---
+# Summary
+Revenue grew 12%.
+\`\`\``;
+    const { exports, errors } = parseNebulaExportFences(content, assignId);
+    assert.equal(errors.length, 0);
+    assert.equal(exports.length, 1);
+    assert.equal(exports[0].format, "pdf");
+    assert.equal(exports[0].filename, "report.pdf");
+  });
+
+  it("infers format from filename without a --- separator", () => {
+    const content = `\`\`\`nebula-export
+filename: notes.txt
+Buy milk
+Walk the dog
+\`\`\``;
+    const { exports, errors } = parseNebulaExportFences(content, assignId);
+    assert.equal(errors.length, 0);
+    assert.equal(exports.length, 1);
+    assert.equal(exports[0].format, "txt");
+    assert.match(exports[0].body, /Buy milk/);
+  });
+
   it("rejects invalid format", () => {
     const content = `\`\`\`nebula-export
 format: exe
