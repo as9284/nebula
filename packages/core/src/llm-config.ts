@@ -76,7 +76,7 @@ export const LLM_PRESETS: LlmPreset[] = [
     provider: "openai",
     baseUrl: "http://localhost:11434/v1/chat/completions",
     model: "llama3.2",
-    hint: "Run Ollama locally; API key can be any placeholder.",
+    hint: "Run Ollama locally; API key can be any placeholder. For the hosted app, allow this site's origin via OLLAMA_ORIGINS so the browser can connect.",
   },
   {
     id: "lmstudio",
@@ -84,7 +84,7 @@ export const LLM_PRESETS: LlmPreset[] = [
     provider: "openai",
     baseUrl: "http://localhost:1234/v1/chat/completions",
     model: "local-model",
-    hint: "Start the Local Server in LM Studio. Use the model ID from the server tab or GET /v1/models. API key can be any placeholder (e.g. lm-studio).",
+    hint: "Start the Local Server in LM Studio (enable CORS so the hosted app's browser can connect). Use the model ID from the server tab or GET /v1/models. API key can be any placeholder (e.g. lm-studio).",
   },
   {
     id: "anthropic",
@@ -108,6 +108,25 @@ export function normalizeOpenAiCompletionsUrl(url: string): string {
     ? trimmed
     : `${trimmed}/chat/completions`;
   return forceIpv4Loopback(completions);
+}
+
+/**
+ * True when the base URL points at the user's own machine (Ollama/LM Studio).
+ * Such providers must be called from the browser, not a hosted server — a
+ * remote server's loopback isn't the user's machine.
+ */
+export function isLoopbackUrl(url: string): boolean {
+  try {
+    const { hostname } = new URL(url);
+    return (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "::1" ||
+      hostname === "[::1]"
+    );
+  } catch {
+    return false;
+  }
 }
 
 /**

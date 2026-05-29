@@ -1,5 +1,10 @@
-import type { LlmConfig } from "@nebula/core/llm-config";
-import type { LlmContentPart } from "@nebula/core/llm";
+import { type LlmConfig, isLoopbackUrl } from "@nebula/core/llm-config";
+import {
+  type LlmContentPart,
+  type LlmMessage,
+  streamLlm,
+  completeLlmMessages,
+} from "@nebula/core/llm";
 import { deliverStreamingText } from "@nebula/core/reasoning-stream";
 import type { SearchTopic } from "@/lib/search-query";
 import type { SearchProvider, WebSearchResponse } from "@/types/search";
@@ -37,6 +42,12 @@ export async function streamChat(
   const payloadMessages = options?.visionParts?.length
     ? withVisionOnLastUser(messages, options.visionParts)
     : messages;
+
+  // Local models (Ollama/LM Studio) live on the user's machine, so the request
+  // must come from the browser — a hosted server can't reach the user's loopback.
+  if (isLoopbackUrl(llm.baseUrl)) {
+    return streamLocalChat(payloadMessages, systemPrompt, llm, signal, handlers);
+  }
 
   const res = await fetch("/api/chat/stream", {
     method: "POST",
@@ -110,6 +121,47 @@ export async function streamChat(
   return { content, thinking };
 }
 
+/** Stream directly from the browser to a local model server (Ollama/LM Studio). */
+async function streamLocalChat(
+  messages: StreamMessage[],
+  systemPrompt: string,
+  llm: LlmConfig,
+  signal: AbortSignal,
+  handlers: StreamChatHandlers,
+): Promise<StreamChatResult> {
+  const fullMessages: LlmMessage[] = systemPrompt
+    ? [{ role: "system", content: systemPrompt }, ...messages]
+    : messages;
+
+  let content = "";
+  let thinking = "";
+  // Serialize handler work so sliced tokens render in order (streamLlm fires
+  // its callbacks synchronously without awaiting them).
+  let chain = Promise.resolve();
+  const queue = (
+    text: string,
+    onSlice: (slice: string) => void | Promise<void>,
+  ) => {
+    chain = chain.then(() => deliverStreamingText(text, onSlice));
+  };
+
+  await streamLlm(llm, fullMessages, signal, {
+    onContent: (text) =>
+      queue(text, async (slice) => {
+        content += slice;
+        await handlers.onContent?.(slice);
+      }),
+    onReasoning: (text) =>
+      queue(text, async (slice) => {
+        thinking += slice;
+        await handlers.onReasoning?.(slice);
+      }),
+  });
+  await chain;
+
+  return { content, thinking };
+}
+
 function withVisionOnLastUser(
   messages: StreamMessage[],
   visionParts: LlmContentPart[],
@@ -164,6 +216,10 @@ export async function completeText(
   prompt: string,
   llm: LlmConfig,
 ): Promise<string> {
+  if (isLoopbackUrl(llm.baseUrl)) {
+    return completeLlmMessages(llm, [{ role: "user", content: prompt }]);
+  }
+
   const res = await fetch("/api/ai/text", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
