@@ -7,7 +7,7 @@ import { buildLunaSystemPrompt } from "@/lib/luna-prompt";
 import { constellationHandlers } from "@/lib/constellations";
 import { buildSearchContext, decideWebSearch } from "@/lib/search-decision";
 import { isWebSearchAvailable } from "@/lib/search-provider";
-import { isLlmConfigured } from "@nebula/core/llm-config";
+import { isLlmConfigured, isLoopbackUrl } from "@nebula/core/llm-config";
 import {
   buildVisionParts,
   formatAttachmentsForDisplay,
@@ -260,6 +260,7 @@ export function useChat() {
           state.memories,
           lunaControls,
           searchAvailable,
+          { localModel: isLoopbackUrl(llmConfig.baseUrl) },
         );
 
         const abortController = new AbortController();

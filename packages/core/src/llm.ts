@@ -223,14 +223,13 @@ async function streamOpenAiCompatible(
       }
 
       if (delta.content) {
+        const piece = contentTracker.push(delta.content);
+        if (!piece) continue;
         if (useReasoningSplit) {
-          const piece = contentTracker.push(delta.content);
-          if (piece) {
-            content += piece;
-            handlers.onContent?.(piece);
-          }
+          content += piece;
+          handlers.onContent?.(piece);
         } else {
-          const split = tagSplitter!.push(delta.content);
+          const split = tagSplitter!.push(piece);
           if (split.content) content += split.content;
           if (split.reasoning) thinking += split.reasoning;
           emitStreamDelta(split, handlers);

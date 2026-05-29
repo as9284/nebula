@@ -1,4 +1,5 @@
 import type { ComponentType } from "react";
+import { parseJsonLenient } from "./json-parse";
 
 export interface ParsedCommand {
   command: string;
@@ -129,11 +130,42 @@ function parseBareCommandLine(line: string): ParsedCommand | null {
   try {
     return {
       command,
-      args: JSON.parse(jsonStr) as Record<string, unknown>,
+      args: parseJsonLenient(jsonStr) as Record<string, unknown>,
     };
   } catch {
     return null;
   }
+}
+
+/** Scan text for COMMAND { ... } including multiline JSON (common from local models). */
+function scanCommandsInText(text: string): ParsedCommand[] {
+  const commands: ParsedCommand[] = [];
+  const re = new RegExp(`\\b(${ACTION_COMMAND_PATTERN})\\s+\\{`, "gi");
+  let match = re.exec(text);
+  while (match) {
+    const command = match[1].toUpperCase();
+    if (
+      !ACTION_COMMAND_NAMES.includes(command as ActionCommandName)
+    ) {
+      match = re.exec(text);
+      continue;
+    }
+    const jsonStart = match.index + match[0].length - 1;
+    const jsonEnd = findBalancedJsonEnd(text, jsonStart);
+    if (jsonEnd === null) break;
+    const jsonStr = text.slice(jsonStart, jsonEnd + 1);
+    try {
+      commands.push({
+        command,
+        args: parseJsonLenient(jsonStr) as Record<string, unknown>,
+      });
+    } catch {
+      // skip unparseable segment
+    }
+    re.lastIndex = jsonEnd + 1;
+    match = re.exec(text);
+  }
+  return commands;
 }
 
 function isActionCommandBody(body: string): boolean {
@@ -204,6 +236,11 @@ function stripOrphanCodeFences(content: string): string {
 }
 
 export function parseBareCommands(response: string): ParseCommandsResult {
+  const scanned = scanCommandsInText(response);
+  if (scanned.length > 0) {
+    return { commands: scanned, errors: [] };
+  }
+
   const commands: ParsedCommand[] = [];
   const errors: ActionResult[] = [];
   const lines = response.split("\n");
@@ -268,7 +305,16 @@ export function parseCommandsDetailed(
   const body = getCommandBlockBody(response, tag);
   if (!body) return { commands: [], errors: [] };
 
-  const lines = multi ? body.trim().split("\n") : [body.trim().split("\n")[0]];
+  const trimmedBody = body.trim();
+  const scanned = scanCommandsInText(trimmedBody);
+  if (scanned.length > 0) {
+    return {
+      commands: multi ? scanned : scanned.slice(0, 1),
+      errors: [],
+    };
+  }
+
+  const lines = multi ? trimmedBody.split("\n") : [trimmedBody.split("\n")[0]];
 
   const commands: ParsedCommand[] = [];
   const errors: ActionResult[] = [];
@@ -282,7 +328,7 @@ export function parseCommandsDetailed(
     try {
       commands.push({
         command,
-        args: JSON.parse(jsonStr) as Record<string, unknown>,
+        args: parseJsonLenient(jsonStr) as Record<string, unknown>,
       });
     } catch {
       errors.push({

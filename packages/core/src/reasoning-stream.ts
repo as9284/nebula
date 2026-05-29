@@ -27,6 +27,8 @@ export function shouldUseReasoningSplit(config: LlmConfig): boolean {
 
 type OpenAiDelta = {
   content?: string | null;
+  /** LM Studio / o-series style reasoning stream field */
+  reasoning?: string | null;
   reasoning_content?: string | null;
   reasoning_details?: { type?: string; text?: string }[] | null;
 };
@@ -49,6 +51,10 @@ export class OpenAiStreamDeltaParser {
     if (delta) {
       if (typeof delta.content === "string" && delta.content) {
         out.content = delta.content;
+      }
+
+      if (typeof delta.reasoning === "string" && delta.reasoning) {
+        out.reasoning = delta.reasoning;
       }
 
       if (Array.isArray(delta.reasoning_details)) {

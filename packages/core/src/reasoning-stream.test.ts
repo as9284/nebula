@@ -46,6 +46,19 @@ describe("OpenAiStreamDeltaParser", () => {
     assert.equal(second.reasoning, " think");
   });
 
+  it("reads delta.reasoning (LM Studio / o-series)", () => {
+    const parser = new OpenAiStreamDeltaParser();
+    const first = parser.parse({
+      choices: [{ delta: { reasoning: "Let me" } }],
+    });
+    assert.equal(first.reasoning, "Let me");
+
+    const second = parser.parse({
+      choices: [{ delta: { reasoning: "Let me think" } }],
+    });
+    assert.equal(second.reasoning, "Let me think");
+  });
+
   it("reads message.content when delta content is absent", () => {
     const parser = new OpenAiStreamDeltaParser();
     const delta = parser.parse({
