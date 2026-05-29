@@ -199,10 +199,10 @@ export function validateCodeArtifact(
 }
 
 const ARTIFACT_FENCE_RE =
-  /```nebula-artifact\s*\r?\n([\s\S]*?)```/gi;
+  /```\s*nebula-artifact\s*\r?\n([\s\S]*?)```/gi;
 
 const TRAILING_ARTIFACT_FENCE_RE =
-  /```nebula-artifact\s*\r?\n[\s\S]*$/i;
+  /```\s*nebula-artifact\s*\r?\n[\s\S]*$/i;
 
 /** Extract validated artifacts from nebula-artifact fenced blocks. */
 export function parseNebulaArtifactFences(
@@ -241,7 +241,7 @@ export function parseNebulaArtifactFences(
 export function stripNebulaArtifactFences(content: string): string {
   let cleaned = content.replace(ARTIFACT_FENCE_RE, "");
   cleaned = cleaned.replace(TRAILING_ARTIFACT_FENCE_RE, "");
-  const partial = cleaned.match(/\s*```nebula-artifact\s*$/i);
+  const partial = cleaned.match(/\s*```\s*nebula-artifact\s*$/i);
   if (partial) {
     cleaned = cleaned.slice(0, cleaned.length - partial[0].length).trimEnd();
   }

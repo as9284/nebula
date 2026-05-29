@@ -49,11 +49,20 @@ function buildControlDirective(controls: LunaControls): string {
   return parts.join("\n");
 }
 
+const LOCAL_MODEL_TOOL_HINT = `## Local model (important)
+You are on a local endpoint. Luna tools only run when you follow these rules exactly:
+- Put tool output at the **very end** of the reply, after all user-visible prose.
+- **UI / React / HTML / news pages:** one \`nebula-artifact\` fence using the **multiline** \`--- /path\` file format (do not paste full source in chat text).
+- **Tasks, weather, links, memories:** use the matching \`\`\`orbit-commands\`, \`\`\`solaris-commands\`, etc. fence tags — never bare \`CREATE_TASK {...}\` lines outside fences.
+- JSON in command lines must be valid; one command per line when using single-line JSON, or use multiline \`COMMAND { ... }\` inside the fence.
+`;
+
 export function buildLunaSystemPrompt(
   handlers: readonly ConstellationHandler[],
   memories: Memory[],
   controls: LunaControls,
   webSearch: boolean,
+  options?: { localModel?: boolean },
 ): string {
   const handlerSections = handlers
     .map(
@@ -81,8 +90,10 @@ Nebula runs web search automatically when your answer needs fresh information. Y
 - Do NOT add a separate "Sources" or "References" section — the UI shows source cards automatically`
     : "";
 
-  return `${LUNA_IDENTITY}
+  const localBlock = options?.localModel ? `\n${LOCAL_MODEL_TOOL_HINT}\n` : "";
 
+  return `${LUNA_IDENTITY}
+${localBlock}
 ## Behavior
 ${buildControlDirective(controls)}${webSearchBlock}
 

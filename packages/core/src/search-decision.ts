@@ -1,3 +1,4 @@
+import { parseJsonLenient } from "./json-parse";
 import type { SearchTopic } from "./search-query";
 import { NEWS_INTENT } from "./search-query";
 
@@ -201,7 +202,7 @@ function parseClassifierJson(
   }
 
   try {
-    const parsed = JSON.parse(jsonMatch[0]) as {
+    const parsed = parseJsonLenient(jsonMatch[0]) as {
       search?: boolean;
       query?: string;
       topic?: string;

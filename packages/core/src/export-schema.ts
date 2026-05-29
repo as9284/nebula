@@ -125,9 +125,9 @@ export function validateFileExport(
   };
 }
 
-const EXPORT_FENCE_RE = /```nebula-export\s*\r?\n([\s\S]*?)```/gi;
+const EXPORT_FENCE_RE = /```\s*nebula-export\s*\r?\n([\s\S]*?)```/gi;
 
-const TRAILING_EXPORT_FENCE_RE = /```nebula-export\s*\r?\n[\s\S]*$/i;
+const TRAILING_EXPORT_FENCE_RE = /```\s*nebula-export\s*\r?\n[\s\S]*$/i;
 
 /** Extract validated exports from nebula-export fenced blocks. */
 export function parseNebulaExportFences(
@@ -174,7 +174,7 @@ export function stripNebulaExportFences(content: string): string {
   let cleaned = content.replace(EXPORT_FENCE_RE, "");
   cleaned = cleaned.replace(ALT_EXPORT_FENCE_RE, "");
   cleaned = cleaned.replace(TRAILING_EXPORT_FENCE_RE, "");
-  const partial = cleaned.match(/\s*```nebula-export\s*$/i);
+  const partial = cleaned.match(/\s*```\s*nebula-export\s*$/i);
   if (partial) {
     cleaned = cleaned.slice(0, cleaned.length - partial[0].length).trimEnd();
   }
