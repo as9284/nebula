@@ -32,6 +32,16 @@ export interface Conversation {
   messages: ChatMessage[];
   createdAt: number;
   updatedAt: number;
+  /** Rolling summary of older turns (auto-compaction). */
+  contextSummary?: string;
+  /** First message still sent verbatim; older content is in contextSummary. */
+  compactedBeforeMessageId?: string;
+  /** Per-chat instructions (like custom instructions in ChatGPT). */
+  customInstructions?: string;
+  /** Pinned threads appear at the top of the sidebar. */
+  pinned?: boolean;
+  /** ISO timestamp of last automatic compaction. */
+  lastCompactedAt?: number;
 }
 
 export interface Memory {

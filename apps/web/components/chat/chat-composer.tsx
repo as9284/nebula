@@ -18,6 +18,7 @@ import {
 import { cn } from "@/lib/utils";
 import { ComposerAttachmentChip } from "./composer-attachment-chip";
 import { StopButton } from "./stop-button";
+import { ContextMeter } from "./context-meter";
 
 interface ChatComposerProps {
   onSend: (text: string, attachments?: ChatAttachment[]) => void;
@@ -173,6 +174,7 @@ export function ChatComposer({
       onDrop={handleDrop}
     >
       <div className="max-w-2xl mx-auto w-full min-w-0">
+        <ContextMeter />
         <AnimatePresence>
           {(attachments.length > 0 || attachError) && (
             <motion.div

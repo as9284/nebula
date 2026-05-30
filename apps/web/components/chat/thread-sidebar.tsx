@@ -10,7 +10,11 @@ import {
   Trash2,
   X,
   Loader2,
+  Pin,
+  PinOff,
+  ScrollText,
 } from "lucide-react";
+import { ChatInstructionsDialog } from "./chat-instructions-dialog";
 import { useLunaStore } from "@/stores/use-luna-store";
 import { groupConversations } from "@/lib/thread-groups";
 import { isActiveConversationEmpty } from "@/lib/conversation-utils";
@@ -38,8 +42,12 @@ export function ThreadSidebar({
   const setActive = useLunaStore((s) => s.setActiveConversation);
   const renameConversation = useLunaStore((s) => s.renameConversation);
   const deleteConversation = useLunaStore((s) => s.deleteConversation);
+  const toggleConversationPin = useLunaStore((s) => s.toggleConversationPin);
 
   const [menuId, setMenuId] = useState<string | null>(null);
+  const [instructionsConvId, setInstructionsConvId] = useState<string | null>(
+    null,
+  );
   const menuRef = useRef<HTMLDivElement>(null);
   const [renamingId, setRenamingId] = useState<string | null>(null);
   const [renameValue, setRenameValue] = useState("");
@@ -211,6 +219,13 @@ export function ThreadSidebar({
                                   aria-hidden
                                 />
                               ) : null}
+                              {c.pinned ? (
+                                <Pin
+                                  size={12}
+                                  className="shrink-0 text-luna"
+                                  aria-hidden
+                                />
+                              ) : null}
                               <span className="truncate">{c.title}</span>
                             </button>
                           )}
@@ -236,6 +251,34 @@ export function ThreadSidebar({
                               aria-label="Chat options"
                               className="absolute right-2 top-full z-10 mt-1 py-1 rounded-xl border border-border bg-surface-elevated nebula-shadow-dropdown min-w-[9.5rem]"
                             >
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuId(null);
+                                  toggleConversationPin(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                              >
+                                {c.pinned ? (
+                                  <PinOff size={14} aria-hidden />
+                                ) : (
+                                  <Pin size={14} aria-hidden />
+                                )}
+                                {c.pinned ? "Unpin" : "Pin chat"}
+                              </button>
+                              <button
+                                type="button"
+                                role="menuitem"
+                                onClick={() => {
+                                  setMenuId(null);
+                                  setInstructionsConvId(c.id);
+                                }}
+                                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-text-secondary hover:bg-surface-hover hover:text-text-primary transition-colors"
+                              >
+                                <ScrollText size={14} aria-hidden />
+                                Chat instructions
+                              </button>
                               <button
                                 type="button"
                                 role="menuitem"
@@ -280,6 +323,12 @@ export function ThreadSidebar({
           </>
         )}
       </AnimatePresence>
+
+      <ChatInstructionsDialog
+        conversationId={instructionsConvId}
+        open={!!instructionsConvId}
+        onOpenChange={(open) => !open && setInstructionsConvId(null)}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}

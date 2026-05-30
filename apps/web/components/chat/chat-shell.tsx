@@ -20,7 +20,7 @@ export function ChatShell() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [orbitOpen, setOrbitOpen] = useState(false);
-  const { sendMessage, stop, regenerate } = useChat();
+  const { sendMessage, stop, regenerate, editAndResend } = useChat();
   const setDraft = useLunaStore((s) => s.setDraftMessage);
   const truncateFromMessage = useLunaStore((s) => s.truncateFromMessage);
   const createConversation = useLunaStore((s) => s.createConversation);
@@ -39,15 +39,20 @@ export function ChatShell() {
   );
 
   const handleEditUser = useCallback(
-    (content: string) => {
+    (messageId: string, content: string) => {
       const conv = useLunaStore.getState().getActiveConversation();
       if (!conv) return;
-      const msg = [...conv.messages].reverse().find((m) => m.role === "user");
-      if (!msg) return;
-      truncateFromMessage(conv.id, msg.id);
+      truncateFromMessage(conv.id, messageId);
       setDraft(content);
     },
     [truncateFromMessage, setDraft],
+  );
+
+  const handleEditAndResend = useCallback(
+    (messageId: string, content: string) => {
+      void editAndResend(messageId, content);
+    },
+    [editAndResend],
   );
 
   const handleNewChat = useCallback(() => {
@@ -76,6 +81,7 @@ export function ChatShell() {
           onSuggest={handleSuggest}
           onRegenerate={() => void regenerate()}
           onEditUser={handleEditUser}
+          onEditAndResend={handleEditAndResend}
         />
       </div>
 

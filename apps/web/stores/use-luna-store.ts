@@ -26,12 +26,19 @@ export interface ConversationStream {
   statusHint?: string | null;
 }
 
+export interface ConversationContextUsage {
+  estimatedTokens: number;
+  contextWindow: number;
+  usageRatio: number;
+}
+
 interface LunaState {
   conversations: Conversation[];
   activeConversationId: string | null;
   memories: Memory[];
   actionResults: Record<string, import("@/lib/constellation-registry").ActionResult[]>;
   streamingByConversationId: Record<string, ConversationStream>;
+  contextUsageByConversationId: Record<string, ConversationContextUsage>;
   draftMessage: string;
   setDraftMessage: (text: string) => void;
   startConversationStream: (
@@ -88,6 +95,20 @@ interface LunaState {
   setMemories: (memories: Memory[]) => void;
   setConversations: (conversations: Conversation[]) => void;
   getActiveConversation: () => Conversation | undefined;
+  setConversationContextUsage: (
+    conversationId: string,
+    usage: ConversationContextUsage,
+  ) => void;
+  setConversationCompaction: (
+    conversationId: string,
+    contextSummary: string,
+    compactedBeforeMessageId: string,
+  ) => void;
+  setConversationCustomInstructions: (
+    conversationId: string,
+    customInstructions: string,
+  ) => void;
+  toggleConversationPin: (conversationId: string) => void;
 }
 
 export const useLunaStore = create<LunaState>()(
@@ -98,6 +119,7 @@ export const useLunaStore = create<LunaState>()(
       memories: [],
       actionResults: {},
       streamingByConversationId: {},
+      contextUsageByConversationId: {},
       draftMessage: "",
       setDraftMessage: (draftMessage) => set({ draftMessage }),
       startConversationStream: (conversationId, assistantMessageId, phase = "thinking") =>
@@ -266,12 +288,75 @@ export const useLunaStore = create<LunaState>()(
             if (c.id !== conversationId) return c;
             const idx = c.messages.findIndex((m) => m.id === messageId);
             if (idx === -1) return c;
+            const compactIdx = c.compactedBeforeMessageId
+              ? c.messages.findIndex((m) => m.id === c.compactedBeforeMessageId)
+              : -1;
+            const clearCompaction =
+              compactIdx !== -1 && idx <= compactIdx;
             return {
               ...c,
               messages: c.messages.slice(0, idx),
               updatedAt: Date.now(),
+              ...(clearCompaction
+                ? {
+                    contextSummary: undefined,
+                    compactedBeforeMessageId: undefined,
+                    lastCompactedAt: undefined,
+                  }
+                : {}),
             };
           }),
+        }));
+        triggerCloudSync();
+      },
+      setConversationContextUsage: (conversationId, usage) =>
+        set((s) => ({
+          contextUsageByConversationId: {
+            ...s.contextUsageByConversationId,
+            [conversationId]: usage,
+          },
+        })),
+      setConversationCompaction: (
+        conversationId,
+        contextSummary,
+        compactedBeforeMessageId,
+      ) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  contextSummary,
+                  compactedBeforeMessageId,
+                  lastCompactedAt: Date.now(),
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        }));
+        triggerCloudSync();
+      },
+      setConversationCustomInstructions: (conversationId, customInstructions) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? {
+                  ...c,
+                  customInstructions: customInstructions.trim() || undefined,
+                  updatedAt: Date.now(),
+                }
+              : c,
+          ),
+        }));
+        triggerCloudSync();
+      },
+      toggleConversationPin: (conversationId) => {
+        set((s) => ({
+          conversations: s.conversations.map((c) =>
+            c.id === conversationId
+              ? { ...c, pinned: !c.pinned, updatedAt: Date.now() }
+              : c,
+          ),
         }));
         triggerCloudSync();
       },

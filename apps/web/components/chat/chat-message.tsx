@@ -27,7 +27,8 @@ interface ChatMessageProps {
   activeStreamPhase?: ActiveStreamPhase;
   streamStatusHint?: string | null;
   onRegenerate?: () => void;
-  onEditUser?: (content: string) => void;
+  onEditUser?: (messageId: string, content: string) => void;
+  onEditAndResend?: (messageId: string, content: string) => void;
 }
 
 function toIndicatorPhase(
@@ -52,6 +53,7 @@ export function ChatMessage({
   streamStatusHint,
   onRegenerate,
   onEditUser,
+  onEditAndResend,
 }: ChatMessageProps) {
   const actionResults = useLunaStore((s) => s.actionResults[message.id]);
   const displayActionResults = actionResults?.filter(
@@ -146,7 +148,14 @@ export function ChatMessage({
               isLastAssistant={isLastAssistant}
               onRegenerate={onRegenerate}
               onEdit={
-                onEditUser ? () => onEditUser(message.content) : undefined
+                onEditUser
+                  ? () => onEditUser(message.id, message.content)
+                  : undefined
+              }
+              onEditAndResend={
+                onEditAndResend
+                  ? () => onEditAndResend(message.id, message.content)
+                  : undefined
               }
               className="absolute right-0 top-full mt-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto"
             />

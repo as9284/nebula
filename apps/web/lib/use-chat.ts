@@ -51,13 +51,18 @@ import {
   inferStreamPhase,
   startStreamWatchdog,
 } from "@/lib/chat-stream-feedback";
+import {
+  prepareChatContext,
+  type HistoryMessage,
+} from "@nebula/core/context-budget";
+import { maybeCompactConversation } from "@/lib/conversation-compact-runner";
 
 function buildChatHistory(
   messages: ChatMessage[],
   excludeMessageId: string,
   latestUserContent: string,
   actionResults: Record<string, ActionResult[]>,
-): StreamMessage[] {
+): HistoryMessage[] {
   const history = messages
     .filter((m) => m.id !== excludeMessageId)
     .map((m) => {
@@ -69,6 +74,7 @@ function buildChatHistory(
         }
       }
       return {
+        id: m.id,
         role: m.role as "user" | "assistant",
         content,
       };
@@ -246,7 +252,7 @@ export function useChat() {
 
         const state = useLunaStore.getState();
         const conv = state.conversations.find((c) => c.id === convId);
-        const history = conv
+        const rawHistory = conv
           ? buildChatHistory(
               conv.messages,
               assistantId,
@@ -260,8 +266,25 @@ export function useChat() {
           state.memories,
           lunaControls,
           searchAvailable,
-          { localModel: isLoopbackUrl(llmConfig.baseUrl) },
+          {
+            localModel: isLoopbackUrl(llmConfig.baseUrl),
+            chatInstructions: conv?.customInstructions,
+          },
         );
+
+        const prepared = prepareChatContext(rawHistory, {
+          model: llmConfig.model,
+          systemPrompt,
+          contextSummary: conv?.contextSummary,
+          compactedBeforeMessageId: conv?.compactedBeforeMessageId,
+        });
+        const history = prepared.messages;
+
+        useLunaStore.getState().setConversationContextUsage(convId, {
+          estimatedTokens: prepared.estimatedTokens,
+          contextWindow: prepared.contextWindow,
+          usageRatio: prepared.usageRatio,
+        });
 
         const abortController = new AbortController();
         setStreamAbortController(convId, abortController);
@@ -381,6 +404,10 @@ export function useChat() {
             }
           }
           completedSuccessfully = true;
+          void maybeCompactConversation(convId, llmConfig, {
+            usageRatio: prepared.usageRatio,
+            wasPruned: prepared.wasPruned,
+          });
         } finally {
           watchdog.stop();
         }
@@ -440,5 +467,23 @@ export function useChat() {
     await sendMessage(lastUser.content);
   }, [sendMessage]);
 
-  return { sendMessage, stop, regenerate, sandboxOpen: !!getSandboxPayload() };
+  const editAndResend = useCallback(
+    async (messageId: string, newContent: string) => {
+      const conv = useLunaStore.getState().getActiveConversation();
+      if (!conv) return;
+      const trimmed = newContent.trim();
+      if (!trimmed) return;
+      useLunaStore.getState().truncateFromMessage(conv.id, messageId);
+      await sendMessage(trimmed);
+    },
+    [sendMessage],
+  );
+
+  return {
+    sendMessage,
+    stop,
+    regenerate,
+    editAndResend,
+    sandboxOpen: !!getSandboxPayload(),
+  };
 }

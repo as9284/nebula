@@ -62,7 +62,7 @@ export function buildLunaSystemPrompt(
   memories: Memory[],
   controls: LunaControls,
   webSearch: boolean,
-  options?: { localModel?: boolean },
+  options?: { localModel?: boolean; chatInstructions?: string },
 ): string {
   const handlerSections = handlers
     .map(
@@ -92,7 +92,12 @@ Nebula runs web search automatically when your answer needs fresh information. Y
 
   const localBlock = options?.localModel ? `\n${LOCAL_MODEL_TOOL_HINT}\n` : "";
 
+  const chatInstructionsBlock = options?.chatInstructions?.trim()
+    ? `\n## Instructions for this chat\n${options.chatInstructions.trim()}\n`
+    : "";
+
   return `${LUNA_IDENTITY}
+${chatInstructionsBlock}
 ${localBlock}
 ## Behavior
 ${buildControlDirective(controls)}${webSearchBlock}
