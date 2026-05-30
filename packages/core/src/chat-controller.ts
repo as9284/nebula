@@ -15,6 +15,7 @@ import { isWebSearchAvailable } from "./search-provider";
 import type { LlmConfig } from "./llm-config";
 import { isLlmConfigured } from "./llm-config";
 import { streamChatModel, completeChatModel, searchWebDirect } from "./stream-api";
+import { prepareChatContext } from "./context-budget";
 
 export interface ChatControllerDeps {
   getLlmConfig: () => Promise<LlmConfig>;
@@ -41,6 +42,9 @@ export interface SendChatInput {
   assistantMessageId: string;
   userMessageId: string;
   actionResults: Record<string, ActionResult[]>;
+  contextSummary?: string;
+  compactedBeforeMessageId?: string;
+  customInstructions?: string;
 }
 
 export async function runChatTurn(
@@ -94,7 +98,7 @@ export async function runChatTurn(
 
   deps.onPhase?.("thinking");
 
-  const history: StreamMessage[] = input.messages
+  const rawHistory = input.messages
     .filter((m) => m.id !== input.assistantMessageId)
     .map((m) => {
       let content = m.content;
@@ -104,12 +108,16 @@ export async function runChatTurn(
           content += formatActionResultsForHistory(executed);
         }
       }
-      return { role: m.role as "user" | "assistant", content };
+      return {
+        id: m.id,
+        role: m.role as "user" | "assistant",
+        content,
+      };
     });
 
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i].role === "user") {
-      history[i] = { ...history[i], content: userContent };
+  for (let i = rawHistory.length - 1; i >= 0; i--) {
+    if (rawHistory[i].role === "user") {
+      rawHistory[i] = { ...rawHistory[i], content: userContent };
       break;
     }
   }
@@ -119,7 +127,16 @@ export async function runChatTurn(
     deps.getMemories(),
     deps.getLunaControls(),
     searchAvailable,
+    { chatInstructions: input.customInstructions },
   );
+
+  const prepared = prepareChatContext(rawHistory, {
+    model: llmConfig.model,
+    systemPrompt,
+    contextSummary: input.contextSummary,
+    compactedBeforeMessageId: input.compactedBeforeMessageId,
+  });
+  const history = prepared.messages;
 
   let streaming = false;
   const full = await streamChatModel(

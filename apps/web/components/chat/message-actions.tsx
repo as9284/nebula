@@ -1,6 +1,6 @@
 "use client";
 
-import { Copy, RotateCcw, Pencil } from "lucide-react";
+import { Copy, RotateCcw, Pencil, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface MessageActionsProps {
@@ -9,6 +9,7 @@ interface MessageActionsProps {
   isLastAssistant: boolean;
   onRegenerate?: () => void;
   onEdit?: () => void;
+  onEditAndResend?: () => void;
   className?: string;
 }
 
@@ -18,6 +19,7 @@ export function MessageActions({
   isLastAssistant,
   onRegenerate,
   onEdit,
+  onEditAndResend,
   className,
 }: MessageActionsProps) {
   const copy = () => void navigator.clipboard.writeText(content);
@@ -55,6 +57,17 @@ export function MessageActions({
           className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
         >
           <Pencil size={14} aria-hidden />
+        </button>
+      )}
+      {role === "user" && onEditAndResend && (
+        <button
+          type="button"
+          onClick={onEditAndResend}
+          aria-label="Edit and resend"
+          title="Edit and resend"
+          className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+        >
+          <Send size={14} aria-hidden />
         </button>
       )}
     </div>

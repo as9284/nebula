@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { ChatMessage } from "./chat-message";
 import { WelcomeState } from "./welcome-state";
+import { CompactionNotice } from "./compaction-notice";
 import { useLunaStore } from "@/stores/use-luna-store";
 import {
   getActiveStreamAssistantMessageId,
@@ -14,13 +15,15 @@ import {
 interface MessageListProps {
   onSuggest: (text: string) => void;
   onRegenerate: () => void;
-  onEditUser: (content: string) => void;
+  onEditUser: (messageId: string, content: string) => void;
+  onEditAndResend: (messageId: string, content: string) => void;
 }
 
 export function MessageList({
   onSuggest,
   onRegenerate,
   onEditUser,
+  onEditAndResend,
 }: MessageListProps) {
   const conversation = useLunaStore((s) =>
     s.conversations.find((c) => c.id === s.activeConversationId),
@@ -78,6 +81,7 @@ export function MessageList({
       className="nebula-chat-scroll nebula-chat-inset-x nebula-chat-bottom-pad flex-1 overflow-y-auto pt-[max(1rem,env(safe-area-inset-top,0px))]"
     >
       <div className="max-w-3xl mx-auto w-full">
+        <CompactionNotice />
         {messages.map((msg) => {
           const isActiveAssistant =
             isStreaming &&
@@ -98,6 +102,7 @@ export function MessageList({
                 msg.id === lastAssistantId ? onRegenerate : undefined
               }
               onEditUser={onEditUser}
+              onEditAndResend={onEditAndResend}
             />
           );
         })}
