@@ -157,7 +157,7 @@ export function ChatMessage({
                   ? () => onEditAndResend(message.id, message.content)
                   : undefined
               }
-              className="absolute right-0 top-full mt-0.5 justify-end opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none group-hover:pointer-events-auto"
+              className="absolute right-0 top-full mt-0.5 justify-end pointer-events-auto sm:pointer-events-none sm:group-hover:pointer-events-auto"
             />
           ) : (
             <MessageActions
@@ -165,7 +165,7 @@ export function ChatMessage({
               content={message.content}
               isLastAssistant={isLastAssistant}
               onRegenerate={onRegenerate}
-              className="mt-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              className="mt-1"
             />
           )}
         </div>

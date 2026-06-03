@@ -2,12 +2,14 @@
 
 import { useState, useRef, useEffect, useCallback, useId } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Check } from "lucide-react";
+import { ChevronDown, Check, Eye } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface SelectOption {
   value: string;
   label: string;
+  /** Show a small vision icon (e.g. image-capable models). */
+  vision?: boolean;
 }
 
 interface SelectProps {
@@ -74,8 +76,22 @@ export function Select({
           disabled && "opacity-40 cursor-not-allowed",
         )}
       >
-        <span className={cn("truncate", !selected && "text-text-muted")}>
-          {selected?.label ?? placeholder ?? "Select…"}
+        <span
+          className={cn(
+            "flex items-center gap-1.5 min-w-0 truncate",
+            !selected && "text-text-muted",
+          )}
+        >
+          <span className="truncate">
+            {selected?.label ?? placeholder ?? "Select…"}
+          </span>
+          {selected?.vision && (
+            <Eye
+              size={12}
+              className="shrink-0 text-text-muted"
+              aria-hidden
+            />
+          )}
         </span>
         <motion.div
           animate={{ rotate: open ? 180 : 0 }}
@@ -96,7 +112,7 @@ export function Select({
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -6, scale: 0.96 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="absolute z-[100] left-0 right-0 top-full mt-1.5 py-1.5 rounded-xl border border-border bg-bg nebula-shadow-dropdown overflow-hidden"
+            className="absolute z-[100] left-0 right-0 top-full mt-1.5 py-1.5 rounded-xl border border-border bg-bg nebula-shadow-dropdown max-h-60 overflow-y-auto overscroll-contain"
           >
             {options.map((option) => (
               <button
@@ -112,7 +128,16 @@ export function Select({
                     : "text-text-secondary hover:text-text-primary hover:bg-surface-hover/40",
                 )}
               >
-                <span>{option.label}</span>
+                <span className="flex items-center gap-1.5 min-w-0">
+                  <span className="truncate">{option.label}</span>
+                  {option.vision && (
+                    <Eye
+                      size={12}
+                      className="shrink-0 text-text-muted"
+                      aria-hidden
+                    />
+                  )}
+                </span>
                 {value === option.value && (
                   <Check size={14} className="text-text-primary shrink-0" aria-hidden />
                 )}

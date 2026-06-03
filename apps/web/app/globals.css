@@ -297,6 +297,12 @@ body {
   padding-bottom: calc(11rem + var(--nebula-safe-bottom));
 }
 
+@media (max-width: 639px) {
+  .nebula-chat-bottom-pad {
+    padding-bottom: calc(12rem + var(--nebula-safe-bottom));
+  }
+}
+
 .nebula-composer-offset {
   bottom: calc(7rem + var(--nebula-safe-bottom));
 }
@@ -309,6 +315,8 @@ body {
   color: var(--color-text-primary);
   line-height: 1.65;
   font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+  word-break: break-word;
 }
 
 .luna-prose p {
@@ -585,10 +593,12 @@ body {
 
 .tool-card {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   gap: 0.625rem;
   padding: 0.75rem 1rem;
   max-width: 100%;
+  min-width: 0;
   min-width: 0;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -613,6 +623,21 @@ body {
   min-height: 220px;
   overflow: hidden;
   background: #171714;
+}
+
+@media (max-width: 639px) {
+  .artifact-card-body {
+    --artifact-pane-height: min(280px, 50dvh);
+    min-height: 180px;
+  }
+
+  .artifact-preview-pane {
+    --artifact-scrollbar-size: 0px;
+  }
+
+  .artifact-code-pre {
+    font-size: 12px;
+  }
 }
 
 .artifact-card-pane {

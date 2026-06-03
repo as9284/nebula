@@ -45,7 +45,7 @@ export function UserMessageContent({
         </div>
       )}
       {text ? (
-        <p className="text-[0.9375rem] leading-snug whitespace-pre-wrap text-text-primary">
+        <p className="text-[0.9375rem] leading-snug whitespace-pre-wrap break-words text-text-primary [overflow-wrap:anywhere]">
           {text}
         </p>
       ) : null}

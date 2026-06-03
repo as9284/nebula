@@ -28,7 +28,7 @@ export function ReasoningPanel({ thinking, className }: ReasoningPanelProps) {
         aria-expanded={expanded}
         aria-controls={`${panelId}-body`}
         onClick={() => setExpanded((v) => !v)}
-        className="flex w-full items-center gap-1.5 px-2 py-1 text-left text-[11px] text-text-muted hover:text-text-secondary transition-colors"
+        className="flex w-full min-h-10 items-center gap-1.5 px-3 py-2.5 text-left text-xs text-text-muted transition-colors hover:text-text-secondary sm:min-h-0 sm:px-2 sm:py-1 sm:text-[11px]"
       >
         <ChevronRight
           size={12}

@@ -765,7 +765,7 @@ function LinkRow({
         type="button"
         onClick={copy}
         aria-label="Copy short link"
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-lg p-2 text-text-muted hover:bg-surface-hover hover:text-text-primary sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
       </button>
@@ -774,7 +774,7 @@ function LinkRow({
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Open short link"
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-lg p-2 text-text-muted hover:bg-surface-hover hover:text-text-primary sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         <ExternalLink size={14} aria-hidden />
       </a>
@@ -782,7 +782,7 @@ function LinkRow({
         type="button"
         onClick={onDelete}
         aria-label="Remove link from history"
-        className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-subtle opacity-0 group-hover:opacity-100 transition-opacity"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-lg p-2 text-text-muted opacity-100 transition-opacity hover:bg-danger-subtle hover:text-danger sm:min-h-0 sm:min-w-0 sm:p-1.5 sm:opacity-0 sm:group-hover:opacity-100"
       >
         <Trash2 size={14} aria-hidden />
       </button>
@@ -816,12 +816,12 @@ function ItemActions({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+    <div className="flex shrink-0 gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100">
       <button
         type="button"
         onClick={onEdit}
         aria-label="Edit"
-        className="p-1.5 rounded-lg text-text-muted hover:text-text-primary hover:bg-surface-hover"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-lg p-2 text-text-muted hover:bg-surface-hover hover:text-text-primary sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         <Pencil size={14} aria-hidden />
       </button>
@@ -829,7 +829,7 @@ function ItemActions({
         type="button"
         onClick={onDelete}
         aria-label="Delete"
-        className="p-1.5 rounded-lg text-text-muted hover:text-danger hover:bg-danger-subtle"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-lg p-2 text-text-muted hover:bg-danger-subtle hover:text-danger sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         <Trash2 size={14} aria-hidden />
       </button>

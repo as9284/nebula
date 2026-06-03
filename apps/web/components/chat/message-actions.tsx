@@ -27,7 +27,7 @@ export function MessageActions({
   return (
     <div
       className={cn(
-        "flex gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity",
+        "flex gap-0.5 opacity-100 transition-opacity sm:opacity-0 sm:group-hover:opacity-100",
         className,
       )}
     >
@@ -35,7 +35,7 @@ export function MessageActions({
         type="button"
         onClick={copy}
         aria-label="Copy message"
-        className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+        className="min-h-9 min-w-9 flex items-center justify-center rounded-md p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         <Copy size={14} aria-hidden />
       </button>
@@ -44,7 +44,7 @@ export function MessageActions({
           type="button"
           onClick={onRegenerate}
           aria-label="Regenerate response"
-          className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+          className="min-h-9 min-w-9 flex items-center justify-center rounded-md p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
         >
           <RotateCcw size={14} aria-hidden />
         </button>
@@ -54,7 +54,7 @@ export function MessageActions({
           type="button"
           onClick={onEdit}
           aria-label="Edit message"
-          className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+          className="min-h-9 min-w-9 flex items-center justify-center rounded-md p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
         >
           <Pencil size={14} aria-hidden />
         </button>
@@ -65,7 +65,7 @@ export function MessageActions({
           onClick={onEditAndResend}
           aria-label="Edit and resend"
           title="Edit and resend"
-          className="p-1.5 rounded-md text-text-muted hover:text-text-primary hover:bg-surface-hover"
+          className="min-h-9 min-w-9 flex items-center justify-center rounded-md p-2 text-text-muted hover:text-text-primary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
         >
           <Send size={14} aria-hidden />
         </button>

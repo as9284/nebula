@@ -19,12 +19,12 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
 
   return (
     <div className="artifact-card mt-3 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-surface">
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2">
-        <span className="text-sm font-medium text-text-primary truncate">
+      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border px-3 py-2 sm:px-3">
+        <span className="min-w-0 flex-1 text-sm font-medium text-text-primary truncate">
           {title}
         </span>
         <div
-          className="flex rounded-lg border border-border p-0.5"
+          className="flex w-full shrink-0 rounded-lg border border-border p-0.5 sm:w-auto"
           role="tablist"
           aria-label="Artifact view"
         >
@@ -34,7 +34,7 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
             aria-selected={tab === "preview"}
             onClick={() => setTab("preview")}
             className={cn(
-              "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              "flex min-h-9 flex-1 items-center justify-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:flex-initial sm:px-2.5 sm:py-1",
               tab === "preview"
                 ? "bg-surface-hover text-text-primary"
                 : "text-text-muted hover:text-text-secondary",
@@ -49,7 +49,7 @@ export function CodeArtifactCard({ artifact }: CodeArtifactCardProps) {
             aria-selected={tab === "code"}
             onClick={() => setTab("code")}
             className={cn(
-              "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+              "flex min-h-9 flex-1 items-center justify-center gap-1 rounded-md px-3 py-2 text-xs font-medium transition-colors sm:flex-initial sm:px-2.5 sm:py-1",
               tab === "code"
                 ? "bg-surface-hover text-text-primary"
                 : "text-text-muted hover:text-text-secondary",

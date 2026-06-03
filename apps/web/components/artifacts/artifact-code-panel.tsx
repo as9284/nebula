@@ -53,14 +53,14 @@ export function ArtifactCodePanel({
   return (
     <div className={cn("flex h-full min-h-0 flex-col overflow-hidden", className)}>
       {paths.length > 1 && (
-        <div className="flex shrink-0 gap-1 overflow-x-auto border-b border-border px-2 py-1.5">
+        <div className="flex shrink-0 gap-1 overflow-x-auto overscroll-x-contain border-b border-border px-2 py-1.5 [-webkit-overflow-scrolling:touch]">
           {paths.map((path) => (
             <button
               key={path}
               type="button"
               onClick={() => setActivePath(path)}
               className={cn(
-                "shrink-0 rounded-md px-2 py-1 text-xs font-mono transition-colors",
+                "shrink-0 rounded-md px-2.5 py-2 text-xs font-mono transition-colors sm:py-1",
                 activePath === path
                   ? "bg-surface-hover text-text-primary"
                   : "text-text-muted hover:text-text-secondary",
@@ -75,7 +75,7 @@ export function ArtifactCodePanel({
         <button
           type="button"
           onClick={() => void handleCopy()}
-          className="absolute right-2 top-2 z-10 flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-xs text-text-secondary hover:text-text-primary"
+          className="absolute right-2 top-2 z-10 flex min-h-9 items-center gap-1 rounded-md border border-border bg-surface px-2.5 py-2 text-xs text-text-secondary hover:text-text-primary sm:min-h-0 sm:py-1"
           aria-label="Copy code"
         >
           {copied ? <Check size={12} /> : <Copy size={12} />}
