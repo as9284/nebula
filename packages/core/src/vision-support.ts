@@ -3,7 +3,11 @@ import {
   isLlmConfigured,
   normalizeOpenAiCompletionsUrl,
 } from "./llm-config";
-import { isOpenCodeGoConfig } from "./opencode-go";
+import {
+  isOpenCodeGoConfig,
+  isOpenCodeGoVisionModel,
+  OPENCODE_GO_DEFAULT_VISION_MODEL,
+} from "./opencode-go";
 
 const KNOWN_VISION_MODEL = [
   /gpt-4o/i,
@@ -41,6 +45,10 @@ export function modelSupportsVision(config: LlmConfig): boolean {
   const model = config.model.trim();
   if (!model) return false;
 
+  if (isOpenCodeGoConfig(config)) {
+    return isOpenCodeGoVisionModel(model);
+  }
+
   if (KNOWN_VISION_MODEL.some((p) => p.test(model))) return true;
   if (KNOWN_NON_VISION_MODEL.some((p) => p.test(model))) return false;
 
@@ -65,7 +73,7 @@ export function suggestVisionModel(config: LlmConfig): string | null {
   if (modelSupportsVision(config)) return config.model;
 
   if (isOpenCodeGoConfig(config)) {
-    return null;
+    return OPENCODE_GO_DEFAULT_VISION_MODEL;
   }
 
   const host = hostFromBaseUrl(config.baseUrl);

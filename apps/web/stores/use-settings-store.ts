@@ -76,8 +76,8 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "nebula-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 6,
-      migrate: (persisted) => {
+      version: 7,
+      migrate: (persisted, fromVersion) => {
         const state = persisted as SettingsState & {
           webSearchEnabled?: boolean;
           deepseekKey?: string;
@@ -86,18 +86,20 @@ export const useSettingsStore = create<SettingsState>()(
         const {
           webSearchEnabled: _legacyWebSearch,
           deepseekKey,
-          visionHelperConfig: _legacyVision,
           ...rest
         } = state;
         void _legacyWebSearch;
-        void _legacyVision;
 
         const llmConfig = migrateLlmConfig(state.llmConfig, deepseekKey);
+        const visionHelperConfig =
+          fromVersion < 7
+            ? null
+            : (state.visionHelperConfig ?? null);
 
         return {
           ...rest,
           llmConfig,
-          visionHelperConfig: null,
+          visionHelperConfig,
           describeImagesForTextModels:
             state.describeImagesForTextModels ?? true,
           searchProvider: state.searchProvider ?? "builtin",
