@@ -134,7 +134,6 @@ export function Select({
                     <Eye
                       size={12}
                       className="shrink-0 text-text-muted"
-                      title="Supports vision"
                       aria-hidden
                     />
                   )}
