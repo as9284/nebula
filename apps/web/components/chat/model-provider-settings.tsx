@@ -94,8 +94,10 @@ export function ModelProviderSettings() {
 
   const visionModels = useMemo(
     () =>
-      models.filter((m) =>
-        modelSupportsVision(resolveOpenCodeGoLlmConfig(effectiveKey, m.id)),
+      models.filter(
+        (m) =>
+          m.supportsVision ??
+          modelSupportsVision(resolveOpenCodeGoLlmConfig(effectiveKey, m.id)),
       ),
     [models, effectiveKey],
   );
@@ -136,7 +138,7 @@ export function ModelProviderSettings() {
     return {
       value: m.id,
       label: formatOpenCodeGoModelLabel(m.id),
-      vision: modelSupportsVision(config),
+      vision: m.supportsVision ?? modelSupportsVision(config),
     };
   });
 

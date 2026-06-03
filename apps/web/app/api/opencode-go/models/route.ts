@@ -1,7 +1,4 @@
-import {
-  fetchOpenCodeGoModels,
-  parseOpenCodeGoModelsResponse,
-} from "@nebula/core/opencode-go";
+import { fetchOpenCodeGoModelsWithCapabilities } from "@nebula/core/opencode-go";
 
 export async function GET(req: Request) {
   const auth = req.headers.get("authorization");
@@ -10,7 +7,7 @@ export async function GET(req: Request) {
     : "";
 
   try {
-    const models = await fetchOpenCodeGoModels(apiKey || undefined);
+    const models = await fetchOpenCodeGoModelsWithCapabilities(apiKey || undefined);
     return Response.json({ object: "list", data: models });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);
@@ -22,7 +19,7 @@ export async function POST(req: Request) {
   try {
     const body = (await req.json()) as { apiKey?: string };
     const apiKey = body.apiKey?.trim() ?? "";
-    const models = await fetchOpenCodeGoModels(apiKey || undefined);
+    const models = await fetchOpenCodeGoModelsWithCapabilities(apiKey || undefined);
     return Response.json({ object: "list", data: models });
   } catch (e) {
     const message = e instanceof Error ? e.message : String(e);

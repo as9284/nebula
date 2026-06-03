@@ -14,21 +14,122 @@ export const OPENCODE_GO_DEFAULT_MODEL = "deepseek-v4-pro";
 export const OPENCODE_GO_DEFAULT_VISION_MODEL = "kimi-k2.5";
 
 /**
- * OpenCode Go models that accept image input (per OpenCode / Pi catalog).
- * @see https://github.com/openclaw/openclaw/issues/70482
+ * OpenCode's model catalog (ZenData source). The Go `/v1/models` endpoint returns a
+ * lite OpenAI-compatible list without modalities; vision flags live here.
+ * @see https://models.dev/api.json (`opencode-go.models`)
  */
-export const OPENCODE_GO_VISION_MODELS = new Set([
+export const OPENCODE_GO_CATALOG_URL = "https://models.dev/api.json";
+
+/** Used only when the catalog cannot be loaded. Matches models.dev as of 2026-04. */
+export const OPENCODE_GO_VISION_MODELS_FALLBACK = new Set([
   "kimi-k2.5",
   "kimi-k2.6",
-  "glm-5",
-  "glm-5.1",
   "mimo-v2-omni",
+  "mimo-v2.5",
+  "minimax-m3",
   "qwen3.5-plus",
   "qwen3.6-plus",
-  "minimax-m2.7",
+  "qwen3.7-plus",
 ]);
 
 export const OPENCODE_GO_AUTH_URL = "https://opencode.ai/auth";
+
+export interface OpenCodeGoModalities {
+  input?: string[];
+  output?: string[];
+}
+
+export interface OpenCodeGoCatalogEntry {
+  id: string;
+  modalities?: OpenCodeGoModalities;
+}
+
+let cachedVisionModelIds: Set<string> | null = null;
+
+/** Test hook: inject catalog vision ids without fetching models.dev. */
+export function setOpenCodeGoVisionModelIdsForTests(
+  ids: Iterable<string> | null,
+): void {
+  cachedVisionModelIds = ids ? new Set(ids) : null;
+}
+
+export function getOpenCodeGoVisionModelIds(): Set<string> | null {
+  return cachedVisionModelIds;
+}
+
+export function readModelInputModalities(
+  entry: OpenCodeGoCatalogEntry | OpenCodeGoModel,
+): string[] {
+  const fromModel = (entry as OpenCodeGoModel).modalities?.input;
+  if (fromModel?.length) return fromModel;
+  const fromCatalog = (entry as OpenCodeGoCatalogEntry).modalities?.input;
+  if (fromCatalog?.length) return fromCatalog;
+  return [];
+}
+
+export function modalitiesIncludeVision(modalities: {
+  input?: string[];
+}): boolean {
+  return readModelInputModalities(modalities).includes("image");
+}
+
+export function parseOpenCodeGoCatalog(body: unknown): Map<string, OpenCodeGoCatalogEntry> {
+  const map = new Map<string, OpenCodeGoCatalogEntry>();
+  if (!body || typeof body !== "object") return map;
+  const provider = (body as { "opencode-go"?: { models?: Record<string, unknown> } })[
+    "opencode-go"
+  ];
+  const models = provider?.models;
+  if (!models || typeof models !== "object") return map;
+
+  for (const [id, raw] of Object.entries(models)) {
+    if (!raw || typeof raw !== "object") continue;
+    const modalities = (raw as { modalities?: OpenCodeGoModalities }).modalities;
+    map.set(id.trim().toLowerCase(), {
+      id: id.trim().toLowerCase(),
+      modalities,
+    });
+  }
+  return map;
+}
+
+export function applyOpenCodeGoVisionCatalog(
+  catalog: Map<string, OpenCodeGoCatalogEntry>,
+): void {
+  const visionIds = new Set<string>();
+  for (const [id, entry] of catalog) {
+    if (modalitiesIncludeVision(entry)) visionIds.add(id);
+  }
+  cachedVisionModelIds = visionIds;
+}
+
+export async function fetchOpenCodeGoCatalog(
+  signal?: AbortSignal,
+): Promise<Map<string, OpenCodeGoCatalogEntry>> {
+  const res = await fetch(OPENCODE_GO_CATALOG_URL, {
+    headers: { Accept: "application/json" },
+    signal,
+  });
+  if (!res.ok) {
+    throw new Error(`Failed to load OpenCode Go model catalog (${res.status})`);
+  }
+  const json: unknown = await res.json();
+  const catalog = parseOpenCodeGoCatalog(json);
+  applyOpenCodeGoVisionCatalog(catalog);
+  return catalog;
+}
+
+export async function ensureOpenCodeGoVisionCatalog(
+  signal?: AbortSignal,
+): Promise<Set<string>> {
+  if (cachedVisionModelIds) return cachedVisionModelIds;
+  try {
+    await fetchOpenCodeGoCatalog(signal);
+  } catch {
+    cachedVisionModelIds = new Set(OPENCODE_GO_VISION_MODELS_FALLBACK);
+  }
+  return cachedVisionModelIds;
+}
 
 /** Models routed through the Anthropic Messages API on OpenCode Go. */
 export const OPENCODE_GO_ANTHROPIC_MODELS = new Set([
@@ -45,6 +146,9 @@ export interface OpenCodeGoModel {
   object: string;
   created?: number;
   owned_by?: string;
+  /** From models.dev catalog (`modalities.input` includes `image`). */
+  supportsVision?: boolean;
+  modalities?: OpenCodeGoModalities;
 }
 
 export interface OpenCodeGoModelsResponse {
@@ -57,7 +161,9 @@ export function isOpenCodeGoAnthropicModel(modelId: string): boolean {
 }
 
 export function isOpenCodeGoVisionModel(modelId: string): boolean {
-  return OPENCODE_GO_VISION_MODELS.has(modelId.trim().toLowerCase());
+  const id = modelId.trim().toLowerCase();
+  if (cachedVisionModelIds) return cachedVisionModelIds.has(id);
+  return OPENCODE_GO_VISION_MODELS_FALLBACK.has(id);
 }
 
 export function resolveOpenCodeGoLlmConfig(
@@ -113,12 +219,36 @@ export function parseOpenCodeGoModelsResponse(
   if (!body || typeof body !== "object") return [];
   const data = (body as OpenCodeGoModelsResponse).data;
   if (!Array.isArray(data)) return [];
-  return data.filter(
-    (m): m is OpenCodeGoModel =>
-      !!m &&
-      typeof m === "object" &&
-      typeof (m as OpenCodeGoModel).id === "string",
-  );
+  return data
+    .filter(
+      (m): m is OpenCodeGoModel =>
+        !!m &&
+        typeof m === "object" &&
+        typeof (m as OpenCodeGoModel).id === "string",
+    )
+    .map((m) => ({
+      ...m,
+      id: m.id.trim().toLowerCase(),
+    }));
+}
+
+export function enrichOpenCodeGoModelsWithCatalog(
+  models: OpenCodeGoModel[],
+  catalog: Map<string, OpenCodeGoCatalogEntry>,
+): OpenCodeGoModel[] {
+  return models.map((model) => {
+    const id = model.id.trim().toLowerCase();
+    const entry = catalog.get(id);
+    const modalities = entry?.modalities ?? model.modalities;
+    const supportsVision = entry
+      ? modalitiesIncludeVision(entry)
+      : (model.supportsVision ?? isOpenCodeGoVisionModel(id));
+    return {
+      ...model,
+      modalities,
+      supportsVision,
+    };
+  });
 }
 
 export async function fetchOpenCodeGoModels(
@@ -139,4 +269,20 @@ export async function fetchOpenCodeGoModels(
   }
   const json: unknown = await res.json();
   return parseOpenCodeGoModelsResponse(json);
+}
+
+/** Models from Go API plus vision flags from the OpenCode catalog on models.dev. */
+export async function fetchOpenCodeGoModelsWithCapabilities(
+  apiKey?: string,
+  signal?: AbortSignal,
+): Promise<OpenCodeGoModel[]> {
+  const models = await fetchOpenCodeGoModels(apiKey, signal);
+  let catalog: Map<string, OpenCodeGoCatalogEntry>;
+  try {
+    catalog = await fetchOpenCodeGoCatalog(signal);
+  } catch {
+    await ensureOpenCodeGoVisionCatalog(signal);
+    catalog = new Map();
+  }
+  return enrichOpenCodeGoModelsWithCatalog(models, catalog);
 }
