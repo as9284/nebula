@@ -77,16 +77,8 @@ export function ModelProviderSettings() {
   }, []);
 
   useEffect(() => {
-    void refreshModels("");
+    void refreshModels(llmConfig.apiKey);
   }, [refreshModels]);
-
-  useEffect(() => {
-    if (!effectiveKey) return;
-    const timer = setTimeout(() => {
-      void refreshModels(effectiveKey);
-    }, 400);
-    return () => clearTimeout(timer);
-  }, [effectiveKey, refreshModels]);
 
   const save = () => {
     const apiKey = keyInput.trim() || llmConfig.apiKey;
