@@ -105,7 +105,6 @@ export function useChat() {
         tavilyKey,
         searchProvider,
         lunaControls,
-        describeImagesForTextModels,
         visionHelperConfig,
       } = useSettingsStore.getState();
       const searchAvailable = isWebSearchAvailable(searchProvider, tavilyKey);
@@ -172,11 +171,7 @@ export function useChat() {
 
         let userContent = displayContent;
 
-        if (
-          imageAttachments.length > 0 &&
-          !useNativeVision &&
-          describeImagesForTextModels
-        ) {
+        if (imageAttachments.length > 0 && !useNativeVision) {
           const helper = resolveVisionHelperConfig(
             llmConfig,
             visionHelperConfig,

@@ -3,11 +3,13 @@ import { describe, it } from "node:test";
 import {
   formatOpenCodeGoModelLabel,
   isOpenCodeGoAnthropicModel,
+  isOpenCodeGoVisionModel,
   parseOpenCodeGoModelsResponse,
   resolveOpenCodeGoLlmConfig,
   OPENCODE_GO_CHAT_COMPLETIONS_URL,
   OPENCODE_GO_MESSAGES_URL,
 } from "./opencode-go";
+import { modelSupportsVision } from "./vision-support";
 
 describe("isOpenCodeGoAnthropicModel", () => {
   it("detects Anthropic-routed Go models", () => {
@@ -43,6 +45,23 @@ describe("formatOpenCodeGoModelLabel", () => {
       "DeepSeek v4 Pro",
     );
     assert.equal(formatOpenCodeGoModelLabel("kimi-k2.6"), "Kimi K2.6");
+  });
+});
+
+describe("isOpenCodeGoVisionModel", () => {
+  it("marks known multimodal Go models", () => {
+    assert.equal(isOpenCodeGoVisionModel("kimi-k2.6"), true);
+    assert.equal(isOpenCodeGoVisionModel("mimo-v2-omni"), true);
+    assert.equal(isOpenCodeGoVisionModel("deepseek-v4-pro"), false);
+  });
+});
+
+describe("modelSupportsVision for OpenCode Go", () => {
+  it("uses the Go vision catalog", () => {
+    const kimi = resolveOpenCodeGoLlmConfig("sk-test", "kimi-k2.5");
+    const deepseek = resolveOpenCodeGoLlmConfig("sk-test", "deepseek-v4-pro");
+    assert.equal(modelSupportsVision(kimi), true);
+    assert.equal(modelSupportsVision(deepseek), false);
   });
 });
 

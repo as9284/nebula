@@ -10,6 +10,24 @@ export const OPENCODE_GO_MESSAGES_URL =
 
 export const OPENCODE_GO_DEFAULT_MODEL = "deepseek-v4-pro";
 
+/** Default vision/multimodal model when the chat model cannot see images. */
+export const OPENCODE_GO_DEFAULT_VISION_MODEL = "kimi-k2.5";
+
+/**
+ * OpenCode Go models that accept image input (per OpenCode / Pi catalog).
+ * @see https://github.com/openclaw/openclaw/issues/70482
+ */
+export const OPENCODE_GO_VISION_MODELS = new Set([
+  "kimi-k2.5",
+  "kimi-k2.6",
+  "glm-5",
+  "glm-5.1",
+  "mimo-v2-omni",
+  "qwen3.5-plus",
+  "qwen3.6-plus",
+  "minimax-m2.7",
+]);
+
 export const OPENCODE_GO_AUTH_URL = "https://opencode.ai/auth";
 
 /** Models routed through the Anthropic Messages API on OpenCode Go. */
@@ -36,6 +54,10 @@ export interface OpenCodeGoModelsResponse {
 
 export function isOpenCodeGoAnthropicModel(modelId: string): boolean {
   return OPENCODE_GO_ANTHROPIC_MODELS.has(modelId.trim().toLowerCase());
+}
+
+export function isOpenCodeGoVisionModel(modelId: string): boolean {
+  return OPENCODE_GO_VISION_MODELS.has(modelId.trim().toLowerCase());
 }
 
 export function resolveOpenCodeGoLlmConfig(
