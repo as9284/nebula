@@ -130,7 +130,7 @@ export function WelcomeState({
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.35, delay: 0.1 }}
-            className="mt-1.5 text-[2.125rem] font-semibold tracking-tight text-text-primary sm:text-[2.5rem]"
+            className="mt-1.5 text-[1.75rem] font-semibold tracking-tight text-text-primary min-[400px]:text-[2.125rem] sm:text-[2.5rem]"
           >
             Luna
           </motion.h1>
@@ -147,7 +147,7 @@ export function WelcomeState({
             Try asking
           </p>
 
-          <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+          <div className="grid grid-cols-1 gap-2 min-[400px]:grid-cols-2 sm:gap-2.5">
             {suggestions.map((s, i) => {
               const ArrowIcon = i % 2 === 0 ? ArrowRight : ArrowUpRight;
               return (

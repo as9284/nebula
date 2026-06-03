@@ -362,7 +362,7 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                               type="button"
                               aria-label={`Remove memory: ${m.text}`}
                               onClick={() => removeMemory(m.id)}
-                              className="shrink-0 p-1 rounded-md text-text-muted hover:text-danger hover:bg-danger-subtle transition-colors"
+                              className="flex min-h-9 min-w-9 shrink-0 items-center justify-center rounded-md p-2 text-text-muted transition-colors hover:bg-danger-subtle hover:text-danger sm:min-h-0 sm:min-w-0 sm:p-1"
                             >
                               <Trash2 size={12} aria-hidden />
                             </button>

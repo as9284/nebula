@@ -77,7 +77,7 @@ export function GeneratedFileCard({ result }: GeneratedFileCardProps) {
         type="button"
         onClick={() => void handleDownload()}
         disabled={loading}
-        className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-hover px-3 py-1.5 text-xs font-medium text-text-primary transition-colors hover:bg-surface disabled:opacity-50"
+        className="inline-flex w-full shrink-0 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface-hover px-3 py-2.5 text-xs font-medium text-text-primary transition-colors hover:bg-surface disabled:opacity-50 sm:w-auto sm:py-1.5"
       >
         <Download size={14} aria-hidden />
         {loading ? "Preparing…" : downloaded ? "Download again" : "Download"}

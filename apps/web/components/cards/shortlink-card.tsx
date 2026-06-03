@@ -28,8 +28,8 @@ export function ShortlinkCard({ result }: { result: ActionResult }) {
 
   return (
     <div className="tool-card">
-      <Link size={14} className="shrink-0 text-text-secondary" />
-      <div className="flex flex-col gap-1 min-w-0 flex-1">
+      <Link size={14} className="shrink-0 text-text-secondary max-sm:mt-0.5" />
+      <div className="min-w-0 flex-1 basis-[min(100%,12rem)] flex flex-col gap-1">
         <a
           href={short}
           target="_blank"
@@ -40,11 +40,12 @@ export function ShortlinkCard({ result }: { result: ActionResult }) {
         </a>
         <span className="text-text-secondary text-xs truncate">{original}</span>
       </div>
+      <div className="ml-auto flex shrink-0 gap-0.5">
       <button
         type="button"
         onClick={copy}
         aria-label="Copy short link"
-        className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-md p-2 text-text-secondary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         {copied ? <Check size={14} aria-hidden /> : <Copy size={14} aria-hidden />}
       </button>
@@ -53,10 +54,11 @@ export function ShortlinkCard({ result }: { result: ActionResult }) {
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Open short link"
-        className="p-1.5 rounded-md hover:bg-surface-hover text-text-secondary"
+        className="flex min-h-9 min-w-9 items-center justify-center rounded-md p-2 text-text-secondary hover:bg-surface-hover sm:min-h-0 sm:min-w-0 sm:p-1.5"
       >
         <ExternalLink size={14} aria-hidden />
       </a>
+      </div>
     </div>
   );
 }
