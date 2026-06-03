@@ -4,7 +4,7 @@ import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import {
   DEFAULT_LLM_CONFIG,
-  migrateDeepseekKey,
+  migrateLlmConfig,
   type LlmConfig,
 } from "@nebula/core/llm-config";
 import type { LunaControls } from "@/lib/luna-prompt";
@@ -76,27 +76,30 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: "nebula-settings",
       storage: createJSONStorage(() => localStorage),
-      version: 5,
+      version: 6,
       migrate: (persisted) => {
         const state = persisted as SettingsState & {
           webSearchEnabled?: boolean;
           deepseekKey?: string;
+          visionHelperConfig?: LlmConfig | null;
         };
-        const { webSearchEnabled: _legacyWebSearch, deepseekKey, ...rest } =
-          state;
+        const {
+          webSearchEnabled: _legacyWebSearch,
+          deepseekKey,
+          visionHelperConfig: _legacyVision,
+          ...rest
+        } = state;
         void _legacyWebSearch;
+        void _legacyVision;
 
-        const llmConfig =
-          state.llmConfig?.apiKey?.trim()
-            ? state.llmConfig
-            : migrateDeepseekKey(deepseekKey);
+        const llmConfig = migrateLlmConfig(state.llmConfig, deepseekKey);
 
         return {
           ...rest,
           llmConfig,
+          visionHelperConfig: null,
           describeImagesForTextModels:
             state.describeImagesForTextModels ?? true,
-          visionHelperConfig: state.visionHelperConfig ?? null,
           searchProvider: state.searchProvider ?? "builtin",
           theme: state.theme ?? "dark",
         };

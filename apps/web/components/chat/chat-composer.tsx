@@ -154,7 +154,7 @@ export function ChatComposer({
             onClick={onOpenSettings}
             className="text-text-primary underline underline-offset-2"
           >
-            AI model & API key
+            OpenCode Go API key
           </button>{" "}
           in Settings to start chatting.
         </div>
