@@ -97,10 +97,14 @@ export function ModelProviderSettings() {
   const configured = isLlmConfigured(normalizeLlmConfig(llmConfig));
   const displayKey = llmConfig.apiKey ? maskApiKey(llmConfig.apiKey) : null;
 
-  const modelOptions = models.map((m) => ({
-    value: m.id,
-    label: formatOpenCodeGoModelLabel(m.id),
-  }));
+  const modelOptions = models.map((m) => {
+    const config = resolveOpenCodeGoLlmConfig(effectiveKey, m.id);
+    return {
+      value: m.id,
+      label: formatOpenCodeGoModelLabel(m.id),
+      vision: modelSupportsVision(config),
+    };
+  });
 
   const draftConfig = resolveOpenCodeGoLlmConfig(effectiveKey, selectedModel);
 
