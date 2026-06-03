@@ -67,10 +67,10 @@ export function readModelInputModalities(
   return [];
 }
 
-export function modalitiesIncludeVision(modalities: {
-  input?: string[];
-}): boolean {
-  return readModelInputModalities(modalities).includes("image");
+export function modalitiesIncludeVision(
+  entry: OpenCodeGoCatalogEntry | OpenCodeGoModel,
+): boolean {
+  return readModelInputModalities(entry).includes("image");
 }
 
 export function parseOpenCodeGoCatalog(body: unknown): Map<string, OpenCodeGoCatalogEntry> {
@@ -128,7 +128,7 @@ export async function ensureOpenCodeGoVisionCatalog(
   } catch {
     cachedVisionModelIds = new Set(OPENCODE_GO_VISION_MODELS_FALLBACK);
   }
-  return cachedVisionModelIds;
+  return cachedVisionModelIds ?? new Set(OPENCODE_GO_VISION_MODELS_FALLBACK);
 }
 
 /** Models routed through the Anthropic Messages API on OpenCode Go. */
