@@ -3,6 +3,7 @@ import {
   isLlmConfigured,
   normalizeOpenAiCompletionsUrl,
 } from "./llm-config";
+import { isOpenCodeGoConfig } from "./opencode-go";
 
 const KNOWN_VISION_MODEL = [
   /gpt-4o/i,
@@ -62,6 +63,10 @@ function hostFromBaseUrl(baseUrl: string): string {
 /** Suggest a vision-capable model on the same endpoint/credentials. */
 export function suggestVisionModel(config: LlmConfig): string | null {
   if (modelSupportsVision(config)) return config.model;
+
+  if (isOpenCodeGoConfig(config)) {
+    return null;
+  }
 
   const host = hostFromBaseUrl(config.baseUrl);
   const url = config.baseUrl.toLowerCase();

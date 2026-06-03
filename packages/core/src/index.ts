@@ -3,6 +3,7 @@ export * from "./types/orbit";
 export * from "./types/search";
 export * from "./deepseek";
 export * from "./llm-config";
+export * from "./opencode-go";
 export * from "./llm";
 export * from "./image-content-parts";
 export * from "./vision-support";
