@@ -34,6 +34,7 @@ import { Select } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { AccountSection } from "@/components/auth/account-section";
+import { InstallPwaSection } from "@/components/pwa/install-pwa-section";
 import { flushCloudSync } from "@/lib/cloud-sync";
 
 interface SettingsModalProps {
@@ -458,6 +459,8 @@ export function SettingsModal({ open, onOpenChange }: SettingsModalProps) {
                     </motion.p>
                   )}
                 </AnimatePresence>
+
+                <InstallPwaSection />
                 </div>
               </motion.div>
             </Dialog.Content>
